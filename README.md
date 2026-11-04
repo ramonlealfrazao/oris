@@ -403,6 +403,25 @@ ORIS/
 └── README.md
 ```
 
+## API REST (v1) e documentação Swagger
+
+API JSON **somente leitura** para integrações (painéis da Secretaria, futura
+integração com o CNES). Usa a mesma sessão do login web; sem sessão, responde
+`401` em JSON. Não expõe dados pessoais (usuários, e-mails ou auditoria).
+
+| Método | Rota                              | Descrição                                   |
+|--------|-----------------------------------|---------------------------------------------|
+| GET    | `/api/v1/unidades`                | Lista paginada (`situacao`, `bairro`, `cnes`, `pagina`, `limite`) |
+| GET    | `/api/v1/unidades/{id}`           | Detalhe com serviços e equipamentos         |
+| GET    | `/api/v1/servicos`                | Lista paginada (`situacao`, `unidade_id`)   |
+| GET    | `/api/v1/equipamentos`            | Lista paginada (`situacao`, `unidade_id`, `tipo`) |
+| GET    | `/api/v1/indicadores`             | Totais da rede e do fluxo de aprovação      |
+| GET    | `/api/v1/openapi.json`            | Especificação OpenAPI 3.0                   |
+| GET    | `/api/docs`                       | Swagger UI interativo                       |
+
+A especificação também está versionada em `docs/api/openapi.json` e pode ser
+importada direto no Postman (*Import → OpenAPI*).
+
 ## Etapa 03 — Interface funcional com dashboard (Banco de Dados)
 
 Módulo **Banco de Dados** (menu lateral → *Banco de Dados* e *Estatística*),

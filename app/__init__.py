@@ -30,6 +30,9 @@ def create_app(config_object=None):
 
     app.config.from_object(config_object or get_config())
 
+    # Respostas JSON (API v1) com acentuação legível, sem escapes \uXXXX
+    app.json.ensure_ascii = False
+
     # Limite de tamanho de upload no nível do Flask (defesa extra,
     # além da checagem manual em app/routes/importacao.py).
     app.config.setdefault("MAX_CONTENT_LENGTH", 10 * 1024 * 1024)  # 10 MB
@@ -64,6 +67,7 @@ def create_app(config_object=None):
     from app.routes.privacidade import privacidade_bp
     from app.routes.design_system import design_system_bp
     from app.routes.bd import bd_bp
+    from app.routes.api import api_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -80,6 +84,8 @@ def create_app(config_object=None):
     app.register_blueprint(design_system_bp)
     # Etapa 03 (Banco de Dados): módulo com SQL explícito — ver app/bd/
     app.register_blueprint(bd_bp)
+    # API REST v1 somente leitura + documentação OpenAPI/Swagger (app/routes/api.py)
+    app.register_blueprint(api_bp)
 
     # Registra o comando de CLI para criar usuários (ver app/cli.py).
     from app.cli import register_cli_commands
