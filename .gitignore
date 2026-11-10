@@ -5,6 +5,7 @@ env/
 
 # Variáveis de ambiente (segredos)
 .env
+.env.aws
 
 # Python
 __pycache__/
@@ -29,3 +30,5 @@ Thumbs.db
 # Cobertura de testes
 .coverage
 htmlcov/
+docker/ldap/certs/
+docker/keycloak/generated/

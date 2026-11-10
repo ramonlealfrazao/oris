@@ -9,10 +9,14 @@ Fluxo Authorization Code com PKCE (S256):
 2. O provedor redireciona de volta com `code` e `state`; a rota
    confere o `state` (anti-CSRF).
 3. `concluir_autorizacao` troca o `code` no endpoint de token (canal
-   direto servidor-a-servidor, por HTTPS), valida `iss`, `aud` e
-   `nonce` do id_token e lê as claims (sub, nome, e-mail, grupos) do
-   `userinfo`. Como o id_token chega direto do provedor por TLS, a
-   assinatura dele não precisa ser revalidada (OIDC Core, 3.1.3.7).
+   direto servidor-a-servidor, por HTTPS), VERIFICA o id_token
+   (assinatura contra o JWKS do provedor, algoritmo assimétrico da lista
+   permitida, `exp`/`iat` com tolerância de relógio), confere `iss`, `aud`
+   e `nonce` e lê as claims (sub, nome, e-mail, grupos) do `userinfo`.
+   A especificação (OIDC Core 3.1.3.7) permitiria dispensar a assinatura
+   quando o token vem direto do endpoint por TLS, mas essa premissa cai
+   com OIDC_ALLOW_INSECURE e não cobre um `exp` vencido; por isso o ORIS
+   verifica sempre.
 4. As claims viram um `UsuarioExterno`, provisionado nas tabelas locais
    por app/services/diretorio_service.py.
 
@@ -27,11 +31,19 @@ import secrets
 import urllib.parse
 import urllib.request
 
+import jwt
 from flask import current_app
 
 from app.services.diretorio_service import DiretorioConfigError, UsuarioExterno
 
 TIMEOUT_SEGUNDOS = 10
+
+# Só algoritmos assimétricos: HS* e "none" ficam de fora de propósito (um
+# atacante poderia assinar com a chave pública como se fosse segredo HMAC).
+ALGORITMOS_PERMITIDOS = (
+    "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512",
+)
+TOLERANCIA_RELOGIO_SEGUNDOS = 60
 
 
 class OidcError(Exception):
@@ -102,13 +114,44 @@ def iniciar_autorizacao(redirect_uri, config=None):
     return url, estado
 
 
-def _payload_jwt(token):
+def _verificar_id_token(id_token, metadados, config):
+    """Verifica assinatura e datas do id_token e devolve as claims.
+
+    Levanta OidcError (ou DiretorioConfigError se o JWKS não for https://).
+    """
+    jwks_uri = metadados.get("jwks_uri")
+    if not jwks_uri:
+        raise OidcError("Provedor sem jwks_uri: não há como verificar a assinatura.")
+    _exigir_https(jwks_uri, config)
+
     try:
-        carga = token.split(".")[1]
-        carga += "=" * (-len(carga) % 4)
-        return json.loads(base64.urlsafe_b64decode(carga.encode("ascii")))
-    except (IndexError, ValueError) as erro:
+        cabecalho = jwt.get_unverified_header(id_token)
+    except jwt.PyJWTError as erro:
         raise OidcError("id_token malformado.") from erro
+
+    algoritmo = cabecalho.get("alg")
+    if algoritmo not in ALGORITMOS_PERMITIDOS:
+        raise OidcError(f"Algoritmo de assinatura não aceito: {algoritmo!r}.")
+
+    kid = cabecalho.get("kid")
+    chaves = [
+        k for k in (_http_get_json(jwks_uri).get("keys") or [])
+        if k.get("use", "sig") == "sig" and (kid is None or k.get("kid") == kid)
+    ]
+    if not chaves or (kid is None and len(chaves) != 1):
+        raise OidcError("Chave de assinatura do id_token não encontrada no JWKS.")
+
+    try:
+        return jwt.decode(
+            id_token,
+            jwt.PyJWK(chaves[0]).key,
+            algorithms=[algoritmo],
+            audience=config["OIDC_CLIENT_ID"],
+            leeway=TOLERANCIA_RELOGIO_SEGUNDOS,
+            options={"require": ["exp", "iat", "iss", "aud", "sub"]},
+        )
+    except jwt.PyJWTError as erro:
+        raise OidcError(f"id_token inválido: {type(erro).__name__}.") from erro
 
 
 def concluir_autorizacao(codigo, estado, redirect_uri, config=None):
@@ -133,7 +176,7 @@ def concluir_autorizacao(codigo, estado, redirect_uri, config=None):
     id_token = tokens.get("id_token")
     if not id_token:
         raise OidcError("Resposta sem id_token.")
-    claims = _payload_jwt(id_token)
+    claims = _verificar_id_token(id_token, metadados, config)
 
     if claims.get("iss", "").rstrip("/") != config["OIDC_ISSUER"].rstrip("/"):
         raise OidcError("Emissor (iss) do id_token inesperado.")

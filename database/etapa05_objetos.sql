@@ -261,11 +261,11 @@ BEGIN
         SET v_usuario = COALESCE(@oris_usuario_id, (SELECT MIN(id) FROM usuarios));
         IF v_usuario IS NOT NULL THEN
             INSERT INTO auditorias
-                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, data_hora)
+                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, origem_ip, data_hora)
             VALUES
                 (v_usuario, 'TRG_EQUIPAMENTO_SITUACAO', 'equipamentos', NEW.id,
                  CONCAT('Trigger: situacao do equipamento "', NEW.nome, '" mudou'),
-                 OLD.situacao, NEW.situacao, UTC_TIMESTAMP());
+                 OLD.situacao, NEW.situacao, @oris_origem_ip, UTC_TIMESTAMP());
         END IF;
     END IF;
 END $$
@@ -281,13 +281,42 @@ BEGIN
         SET v_usuario = COALESCE(@oris_usuario_id, (SELECT MIN(id) FROM usuarios));
         IF v_usuario IS NOT NULL THEN
             INSERT INTO auditorias
-                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, data_hora)
+                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, origem_ip, data_hora)
             VALUES
                 (v_usuario, 'TRG_UNIDADE_SITUACAO', 'unidades', NEW.id,
                  CONCAT('Trigger: situacao da unidade "', NEW.nome, '" mudou'),
-                 OLD.situacao, NEW.situacao, UTC_TIMESTAMP());
+                 OLD.situacao, NEW.situacao, @oris_origem_ip, UTC_TIMESTAMP());
         END IF;
     END IF;
+END $$
+
+-- =====================================================================
+-- AUDITORIA IMUTAVEL (append-only)
+-- =====================================================================
+-- A trilha so aceita INSERT e SELECT: UPDATE e DELETE em auditorias sao
+-- barrados pelo proprio banco (SIGNAL 45000 -> erro 1644), e nao apenas pela
+-- ausencia de rota na aplicacao. Os triggers acima so fazem INSERT, entao
+-- continuam funcionando.
+-- Limite conhecido: TRUNCATE e DROP TABLE nao disparam triggers. Por isso o
+-- usuario do banco usado pelo ORIS nao deve ter os privilegios DROP, ALTER
+-- nem TRIGGER (ver docs/SEGURANCA.md, SEC-017).
+
+DROP TRIGGER IF EXISTS trg_auditorias_bu $$
+
+CREATE TRIGGER trg_auditorias_bu BEFORE UPDATE ON auditorias
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'auditorias e imutavel: UPDATE nao e permitido';
+END $$
+
+DROP TRIGGER IF EXISTS trg_auditorias_bd $$
+
+CREATE TRIGGER trg_auditorias_bd BEFORE DELETE ON auditorias
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'auditorias e imutavel: DELETE nao e permitido';
 END $$
 
 -- =====================================================================

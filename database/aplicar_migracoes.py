@@ -2,8 +2,10 @@
 Aplica, de forma idempotente, as migracoes pendentes do banco:
 - 0001 (database/migrations/0001_...sql): CNES deixa de ser unico, coluna
   unidades.unidade_e_mista, servicos/equipamentos.unidade_id opcional;
-- 0002 (database/migrations/0002_...sql): Fase 14.
-- 0003 (database/migrations/0003_...sql): descricoes de situacao e motivo de rejeicao.
+- 0002 (database/migrations/0002_...sql): Fase 14;
+- 0003 (database/migrations/0003_...sql): descricoes de situacao e motivo de rejeicao;
+- 0004 (inline, abaixo): auditorias ganha origem_ip, resultado e identificador_tentado,
+  e usuario_id passa a aceitar NULL (tentativa de login sem usuario).
 
 Fase 14:
 - Cria as tabelas que faltam (grupos, usuario_grupos) com db.create_all().
@@ -86,6 +88,17 @@ def main():
                     f"ALTER TABLE {tabela} MODIFY COLUMN situacao "
                     "ENUM('ATIVO','INATIVO','MANUTENCAO') NOT NULL DEFAULT 'ATIVO'"
                 )
+
+        # --- Migracao 0004 (auditoria: DE ONDE e RESULTADO; login falho sem usuario) ---
+        cols_aud = {c["name"]: c for c in insp.get_columns("auditorias")}
+        if "origem_ip" not in cols_aud:
+            comandos.append("ALTER TABLE auditorias ADD COLUMN origem_ip VARCHAR(45) NULL")
+        if "resultado" not in cols_aud:
+            comandos.append("ALTER TABLE auditorias ADD COLUMN resultado VARCHAR(10) NOT NULL DEFAULT 'SUCESSO'")
+        if "identificador_tentado" not in cols_aud:
+            comandos.append("ALTER TABLE auditorias ADD COLUMN identificador_tentado VARCHAR(255) NULL")
+        if not cols_aud["usuario_id"]["nullable"]:
+            comandos.append("ALTER TABLE auditorias MODIFY COLUMN usuario_id INT NULL")
 
         for comando in comandos:
             db.session.execute(text(comando))

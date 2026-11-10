@@ -1,0 +1,11 @@
+# Proxy reverso com HTTPS automatico (Let's Encrypt) para o ORIS na AWS.
+# ORIS_DOMAIN vem do .env (ex.: 54-174-10-29.sslip.io). O Caddy tambem redireciona HTTP -> HTTPS.
+{$ORIS_DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	reverse_proxy app:5000
+}

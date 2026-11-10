@@ -1,0 +1,54 @@
+{
+  "realm": "oris",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "bruteForceProtected": true,
+  "groups": [
+    {"name": "oris-admin"},
+    {"name": "oris-gestao"},
+    {"name": "oris-saude"},
+    {"name": "oris-gestor"}
+  ],
+  "users": [
+    {"username": "oidc.admin", "email": "oidc.admin@oris.example", "firstName": "Otavio", "lastName": "Admin",
+     "enabled": true, "emailVerified": true, "groups": ["oris-admin"],
+     "credentials": [{"type": "password", "value": "@@ORIS_DEMO_SENHA@@", "temporary": false}]},
+    {"username": "oidc.gestao", "email": "oidc.gestao@oris.example", "firstName": "Paula", "lastName": "Gestao",
+     "enabled": true, "emailVerified": true, "groups": ["oris-gestao"],
+     "credentials": [{"type": "password", "value": "@@ORIS_DEMO_SENHA@@", "temporary": false}]},
+    {"username": "oidc.saude", "email": "oidc.saude@oris.example", "firstName": "Quirino", "lastName": "Saude",
+     "enabled": true, "emailVerified": true, "groups": ["oris-saude"],
+     "credentials": [{"type": "password", "value": "@@ORIS_DEMO_SENHA@@", "temporary": false}]},
+    {"username": "oidc.gestor", "email": "oidc.gestor@oris.example", "firstName": "Rita", "lastName": "Gestor",
+     "enabled": true, "emailVerified": true, "groups": ["oris-gestor"],
+     "credentials": [{"type": "password", "value": "@@ORIS_DEMO_SENHA@@", "temporary": false}]},
+    {"username": "oidc.semgrupo", "email": "oidc.semgrupo@oris.example", "firstName": "Sergio", "lastName": "Semgrupo",
+     "enabled": true, "emailVerified": true, "groups": [],
+     "credentials": [{"type": "password", "value": "@@ORIS_DEMO_SENHA@@", "temporary": false}]}
+  ],
+  "clients": [
+    {
+      "clientId": "oris",
+      "name": "ORIS",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "@@OIDC_CLIENT_SECRET@@",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["https://@@ORIS_DOMAIN@@/login/oidc/callback"],
+      "webOrigins": ["https://@@ORIS_DOMAIN@@"],
+      "attributes": {"pkce.code.challenge.method": "S256"},
+      "defaultClientScopes": ["web-origins", "profile", "email", "roles"],
+      "protocolMappers": [
+        {"name": "groups", "protocol": "openid-connect", "protocolMapper": "oidc-group-membership-mapper",
+         "config": {"claim.name": "groups", "full.path": "false", "id.token.claim": "true",
+                    "access.token.claim": "true", "userinfo.token.claim": "true"}}
+      ]
+    }
+  ]
+}

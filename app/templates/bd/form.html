@@ -60,7 +60,7 @@
         <div class="oris-panel">
             <p class="oris-section-label">SQL que será executado</p>
             {% for nome, sql in sql_exibido %}{{ sql_box(nome, sql, aberto=loop.last) }}{% endfor %}
-            {{ sql_box("SQL_INSERIR_AUDITORIA (mesma transação)", "INSERT INTO auditorias (usuario_id, acao, tabela, registro_id, descricao,\n                        valor_anterior, valor_novo, data_hora)\nVALUES (%s, %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP())") }}
+            {{ sql_box("SQL_INSERIR_AUDITORIA (mesma transação)", "INSERT INTO auditorias (usuario_id, acao, tabela, registro_id, descricao,\n                        valor_anterior, valor_novo, origem_ip, resultado, data_hora)\nVALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'SUCESSO', UTC_TIMESTAMP())") }}
             <p class="small text-muted mt-3 mb-0">
                 Os valores digitados viajam separados do texto SQL (parâmetros <code>%s</code>), o que
                 impede SQL Injection. Se qualquer comando falhar, a transação inteira sofre ROLLBACK.

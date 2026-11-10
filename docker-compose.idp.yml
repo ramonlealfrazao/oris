@@ -1,0 +1,75 @@
+# Acrescenta LDAP (OpenLDAP) e OIDC (Keycloak) ao ORIS na AWS. Usar JUNTO do compose da AWS:
+#   sudo docker compose -f docker-compose.aws.yml -f docker-compose.idp.yml --env-file .env.aws up -d --build
+# Antes: gerar os certificados do LDAP e o realm do Keycloak (ver docs/AWS_DEPLOY.md).
+services:
+  ldap:
+    image: osixia/openldap:1.5.0
+    restart: unless-stopped
+    hostname: ldap.oris.local
+    command: ["--copy-service"]
+    environment:
+      LDAP_ORGANISATION: ORIS
+      LDAP_DOMAIN: oris.local
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:?defina LDAP_ADMIN_PASSWORD}
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: ldap.crt
+      LDAP_TLS_KEY_FILENAME: ldap.key
+      LDAP_TLS_CA_CRT_FILENAME: ca.crt
+      LDAP_TLS_VERIFY_CLIENT: never
+    volumes:
+      - ./docker/ldap/bootstrap.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/bootstrap.ldif:ro
+      - ./docker/ldap/certs:/container/service/slapd/assets/certs
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    networks:
+      default:
+        aliases:
+          - ldap.oris.local
+    # Sem "ports": so a app alcanca o LDAP, dentro da rede do Docker.
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    restart: unless-stopped
+    command: ["start", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?defina KC_ADMIN_PASSWORD}
+      KC_HOSTNAME: https://kc.${ORIS_DOMAIN:?defina ORIS_DOMAIN}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      JAVA_OPTS_KC_HEAP: "-Xms256m -Xmx640m"
+    volumes:
+      - ./docker/keycloak/generated/oris-realm.json:/opt/keycloak/data/import/oris-realm.json:ro
+
+  caddy:
+    volumes:
+      - ./docker/Caddyfile.idp:/etc/caddy/Caddyfile:ro
+    networks:
+      default:
+        aliases:
+          - kc.${ORIS_DOMAIN}
+
+  app:
+    depends_on:
+      - ldap
+      - keycloak
+    volumes:
+      - ./docker/ldap/certs/ca.crt:/certs/ca.crt:ro
+    environment:
+      LDAP_URI: ldap://ldap.oris.local:389
+      LDAP_USE_STARTTLS: "true"
+      LDAP_CA_CERT_FILE: /certs/ca.crt
+      LDAP_BIND_DN: cn=admin,dc=oris,dc=local
+      LDAP_BIND_PASSWORD: ${LDAP_ADMIN_PASSWORD:?defina LDAP_ADMIN_PASSWORD}
+      LDAP_USER_BASE: ou=usuarios,dc=oris,dc=local
+      LDAP_GROUP_BASE: ou=grupos,dc=oris,dc=local
+      DIRETORIO_MAPA_GRUPO_PERFIL: '{"oris-admin":"ADMINISTRADOR","oris-gestao":"GESTAO_INFORMACAO","oris-saude":"RESPONSAVEL_SAUDE_BUCAL","oris-gestor":"GESTOR"}'
+      OIDC_ENABLED: "true"
+      OIDC_ISSUER: https://kc.${ORIS_DOMAIN}/realms/oris
+      OIDC_CLIENT_ID: oris
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?defina OIDC_CLIENT_SECRET}
+      OIDC_CLAIM_GROUPS: groups
+
+volumes:
+  ldap_data:
+  ldap_config:

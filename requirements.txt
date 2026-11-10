@@ -15,7 +15,11 @@ openpyxl==3.1.5
 
 # Integração com diretórios e nuvem (Fase 14)
 ldap3==2.9.1
+PyJWT==2.9.0  # verificação de assinatura/exp do id_token do OIDC
 boto3==1.43.126
+
+# Servidor de produção (usado no Docker)
+gunicorn==22.0.0
 
 # Dependência de desenvolvimento/testes
 pytest==8.3.3

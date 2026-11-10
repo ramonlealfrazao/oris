@@ -35,6 +35,14 @@
             </select>
         </div>
         <div class="col-auto">
+            <label class="form-label small text-muted mb-1" for="filtro-resultado">Resultado</label>
+            <select id="filtro-resultado" name="resultado" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Todos</option>
+                <option value="SUCESSO" {% if resultado_filtro == "SUCESSO" %}selected{% endif %}>Sucesso</option>
+                <option value="FALHA" {% if resultado_filtro == "FALHA" %}selected{% endif %}>Falha</option>
+            </select>
+        </div>
+        <div class="col-auto">
             <label class="form-label small text-muted mb-1" for="filtro-acao">Ação</label>
             <select id="filtro-acao" name="acao" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">Todas as ações</option>
@@ -58,7 +66,7 @@
             <label class="form-label small text-muted mb-1" for="filtro-data">Data</label>
             <input id="filtro-data" type="date" name="data" class="form-control form-control-sm" value="{{ data_filtro or '' }}" onchange="this.form.submit()">
         </div>
-        {% if usuario_id_filtro or acao_filtro or tabela_filtro or data_filtro %}
+        {% if usuario_id_filtro or acao_filtro or tabela_filtro or data_filtro or resultado_filtro %}
             <div class="col-auto">
                 <a href="{{ url_for('auditoria.listar') }}" class="btn btn-sm btn-outline-secondary">Limpar filtros</a>
             </div>
@@ -75,6 +83,8 @@
             <tr>
                 <th>Data/Hora</th>
                 <th>Usuário</th>
+                <th>Origem (IP)</th>
+                <th>Resultado</th>
                 <th>Ação</th>
                 <th>Entidade</th>
                 <th>Registro</th>
@@ -86,13 +96,21 @@
             {% for registro in registros %}
             <tr>
                 <td class="text-nowrap">{{ registro.data_hora.strftime("%d/%m/%Y %H:%M:%S") }}</td>
-                <td>{{ registro.usuario.nome }}</td>
+                <td>
+                    {% if registro.usuario %}{{ registro.usuario.nome }}
+                    {% else %}<span class="text-muted">{{ registro.identificador_tentado or "—" }}</span>{% endif %}
+                </td>
+                <td class="text-nowrap">{{ registro.origem_ip or "—" }}</td>
+                <td>
+                    {% if registro.resultado == "FALHA" %}<span class="badge bg-danger">Falha</span>
+                    {% else %}<span class="badge bg-success">Sucesso</span>{% endif %}
+                </td>
                 <td>
                     {% if registro.acao in ("APROVAR_ALTERACAO", "ATIVAR_USUARIO") %}
                         <span class="badge bg-success">{{ registro.acao }}</span>
                     {% elif registro.acao in ("REJEITAR_ALTERACAO", "DESATIVAR_USUARIO") %}
                         <span class="badge bg-danger">{{ registro.acao }}</span>
-                    {% elif registro.acao in ("LOGIN", "LOGOUT") %}
+                    {% elif registro.acao in ("LOGIN", "LOGOUT", "LOGIN_FALHA", "LOGIN_BLOQUEADO") %}
                         <span class="badge bg-secondary">{{ registro.acao }}</span>
                     {% else %}
                         <span class="badge bg-dark">{{ registro.acao }}</span>

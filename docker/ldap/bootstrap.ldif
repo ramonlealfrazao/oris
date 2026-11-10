@@ -1,0 +1,64 @@
+# Dados do LDAP de laboratorio (sem senhas: o login de pessoas e feito pelo OIDC).
+# Base dc=oris,dc=local e criada pelo proprio contêiner.
+dn: ou=usuarios,dc=oris,dc=local
+objectClass: organizationalUnit
+ou: usuarios
+
+dn: ou=grupos,dc=oris,dc=local
+objectClass: organizationalUnit
+ou: grupos
+
+dn: uid=ana.admin,ou=usuarios,dc=oris,dc=local
+objectClass: inetOrgPerson
+uid: ana.admin
+cn: Ana Administradora
+sn: Administradora
+mail: ana.admin@oris.example
+
+dn: uid=bruno.gestao,ou=usuarios,dc=oris,dc=local
+objectClass: inetOrgPerson
+uid: bruno.gestao
+cn: Bruno Gestao da Informacao
+sn: Gestao
+mail: bruno.gestao@oris.example
+
+dn: uid=carla.saude,ou=usuarios,dc=oris,dc=local
+objectClass: inetOrgPerson
+uid: carla.saude
+cn: Carla Saude Bucal
+sn: Saude
+mail: carla.saude@oris.example
+
+dn: uid=davi.gestor,ou=usuarios,dc=oris,dc=local
+objectClass: inetOrgPerson
+uid: davi.gestor
+cn: Davi Gestor
+sn: Gestor
+mail: davi.gestor@oris.example
+
+dn: uid=eva.semgrupo,ou=usuarios,dc=oris,dc=local
+objectClass: inetOrgPerson
+uid: eva.semgrupo
+cn: Eva Sem Grupo
+sn: Semgrupo
+mail: eva.semgrupo@oris.example
+
+dn: cn=oris-admin,ou=grupos,dc=oris,dc=local
+objectClass: groupOfNames
+cn: oris-admin
+member: uid=ana.admin,ou=usuarios,dc=oris,dc=local
+
+dn: cn=oris-gestao,ou=grupos,dc=oris,dc=local
+objectClass: groupOfNames
+cn: oris-gestao
+member: uid=bruno.gestao,ou=usuarios,dc=oris,dc=local
+
+dn: cn=oris-saude,ou=grupos,dc=oris,dc=local
+objectClass: groupOfNames
+cn: oris-saude
+member: uid=carla.saude,ou=usuarios,dc=oris,dc=local
+
+dn: cn=oris-gestor,ou=grupos,dc=oris,dc=local
+objectClass: groupOfNames
+cn: oris-gestor
+member: uid=davi.gestor,ou=usuarios,dc=oris,dc=local

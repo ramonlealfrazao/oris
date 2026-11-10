@@ -55,7 +55,7 @@ def test_cada_create_tem_drop_if_exists_ou_or_replace():
 
 def test_comandos_nao_trazem_o_separador():
     assert all("$$" not in c for c in objetos.ler_comandos())
-    assert len(objetos.ler_comandos()) == 29
+    assert len(objetos.ler_comandos()) == 33  # 29 + (DROP+CREATE) x 2 triggers de auditoria
 
 
 def test_exige_tres_tipos_de_objeto():

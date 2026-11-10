@@ -99,6 +99,8 @@ TRIGGERS = {
     "trg_manutencoes_au": "AFTER UPDATE em manutencoes: ao encerrar a corretiva, o equipamento volta a ATIVO.",
     "trg_equipamentos_au": "AFTER UPDATE em equipamentos: grava em auditorias cada mudança de situação.",
     "trg_unidades_au": "AFTER UPDATE em unidades: grava em auditorias cada mudança de situação.",
+    "trg_auditorias_bu": "BEFORE UPDATE em auditorias: barra qualquer alteração (trilha imutável).",
+    "trg_auditorias_bd": "BEFORE DELETE em auditorias: barra qualquer exclusão (trilha imutável).",
 }
 
 VIEWS = {

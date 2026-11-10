@@ -44,7 +44,16 @@
         </div>
         <div>
             <dt>Usuário</dt>
-            <dd>{{ registro.usuario.nome }} ({{ registro.usuario.perfil.value }})</dd>
+            <dd>
+                {% if registro.usuario %}{{ registro.usuario.nome }} ({{ registro.usuario.perfil.value }})
+                {% else %}Sem usuário vinculado — identificador informado: {{ registro.identificador_tentado or "—" }}{% endif %}
+            </dd>
+
+            <dt>Origem (IP)</dt>
+            <dd>{{ registro.origem_ip or "—" }}</dd>
+
+            <dt>Resultado</dt>
+            <dd>{{ "Falha" if registro.resultado == "FALHA" else "Sucesso" }}</dd>
         </div>
         <div>
             <dt>Entidade</dt>

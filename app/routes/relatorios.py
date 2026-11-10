@@ -24,6 +24,7 @@ from app.services.armazenamento_service import (
 )
 from app.services.auditoria_service import registrar_auditoria
 from app.services.relatorio_service import ENTIDADES_RELATORIO, gerar_csv
+from app.utils.integridade import sha256_hex
 from app.utils.decorators import login_required, roles_required, usuario_atual
 
 relatorios_bp = Blueprint("relatorios", __name__, url_prefix="/relatorios")
@@ -59,19 +60,23 @@ def index():
 def baixar(entidade):
     _validar_entidade_ou_404(entidade)
     nome_arquivo, conteudo = gerar_csv(entidade)
+    hash_conteudo = sha256_hex(conteudo)
 
     registrar_auditoria(
         usuario=usuario_atual(),
         acao="BAIXAR_RELATORIO",
         tabela=entidade,
-        descricao=f"Download do relatório de {entidade} ({nome_arquivo}).",
+        descricao=f"Download do relatório de {entidade} ({nome_arquivo}), SHA-256 {hash_conteudo}.",
     )
     db.session.commit()
 
     return Response(
         conteudo,
         mimetype="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={nome_arquivo}"},
+        headers={
+            "Content-Disposition": f"attachment; filename={nome_arquivo}",
+            "X-Content-SHA256": hash_conteudo,  # o destinatário confere com `sha256sum`
+        },
     )
 
 
@@ -96,7 +101,10 @@ def exportar_s3(entidade):
         usuario=usuario_atual(),
         acao="EXPORTAR_RELATORIO",
         tabela=entidade,
-        descricao=f"Relatório de {entidade} exportado para o armazenamento em nuvem (objeto {chave}).",
+        descricao=(
+            f"Relatório de {entidade} exportado para o armazenamento em nuvem "
+            f"(objeto {chave}), SHA-256 {sha256_hex(conteudo)}."
+        ),
     )
     db.session.commit()
 

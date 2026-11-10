@@ -25,6 +25,7 @@ from app.services.importacao_service import (
     validar_e_classificar,
 )
 from app.utils.decorators import login_required, roles_required, usuario_atual
+from app.utils.integridade import sha256_arquivo
 
 importacao_bp = Blueprint("importacao", __name__, url_prefix="/importacao")
 
@@ -277,6 +278,9 @@ def confirmar():
 
     mapeamento = _extrair_mapeamento_do_formulario(entidade)
 
+    # Hash do arquivo exatamente como será lido: fica na auditoria como prova de qual planilha foi importada.
+    hash_arquivo = sha256_arquivo(caminho)
+
     try:
         df = ler_planilha(caminho, extensao)
     except ArquivoInvalidoError as erro:
@@ -329,7 +333,8 @@ def confirmar():
         tabela=entidade,
         descricao=(
             f"Importação de planilha de {entidade}: {contagens['novo']} novo(s), "
-            f"{contagens['alterado']} alterado(s), {contagens['sem_alteracao']} sem alteração."
+            f"{contagens['alterado']} alterado(s), {contagens['sem_alteracao']} sem alteração. "
+            f"SHA-256 do arquivo: {hash_arquivo}."
         ),
     )
     db.session.commit()

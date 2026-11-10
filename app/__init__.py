@@ -26,6 +26,12 @@ def create_app(config_object=None):
 
     app.config.setdefault("MAX_CONTENT_LENGTH", 10 * 1024 * 1024)  # 10 MB
 
+    n_proxies = int(app.config.get("TRUSTED_PROXY_COUNT") or 0)
+    if n_proxies > 0:
+        from werkzeug.middleware.proxy_fix import ProxyFix
+
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=n_proxies, x_proto=n_proxies, x_host=n_proxies)
+
     db.init_app(app)
     CSRFProtect(app)
 

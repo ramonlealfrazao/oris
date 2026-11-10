@@ -36,6 +36,12 @@ def login():
         rate_limit_ativo = current_app.config.get("RATE_LIMIT_LOGIN_ENABLED", True)
 
         if rate_limit_ativo and bloqueado(ip, email):
+            registrar_auditoria(
+                usuario=None, acao="LOGIN_BLOQUEADO", resultado="FALHA",
+                identificador_tentado=email,
+                descricao="Tentativa bloqueada por excesso de tentativas de login.",
+            )
+            db.session.commit()
             flash(MENSAGEM_MUITAS_TENTATIVAS, "danger")
             return render_template("login.html", form=form)
 
@@ -68,6 +74,22 @@ def login():
 
         if rate_limit_ativo:
             registrar_tentativa_falha(ip, email)
+
+        # O motivo real fica so na trilha de auditoria; ao usuario a mensagem e sempre
+        # generica. A senha digitada NUNCA e gravada.
+        if usuario is None:
+            motivo = "usuário inexistente"
+        elif not usuario.ativo:
+            motivo = "usuário inativo"
+        elif usuario.origem != OrigemDiretorio.LOCAL:
+            motivo = "conta de diretório (LDAP/OIDC) não autentica com senha local"
+        else:
+            motivo = "senha incorreta"
+        registrar_auditoria(
+            usuario=usuario, acao="LOGIN_FALHA", resultado="FALHA",
+            identificador_tentado=email, descricao=f"Falha de login: {motivo}.",
+        )
+        db.session.commit()
         flash(MENSAGEM_LOGIN_INVALIDO, "danger")
 
     return render_template("login.html", form=form)
@@ -116,10 +138,20 @@ def login_oidc_callback():
     except (OidcError, DiretorioConfigError, OSError, ValueError, KeyError):
         current_app.logger.exception("Falha no callback OIDC")
         db.session.rollback()
+        registrar_auditoria(
+            usuario=None, acao="LOGIN_FALHA", resultado="FALHA",
+            descricao="Falha de login via OIDC (token inválido, expirado ou provisionamento recusado).",
+        )
+        db.session.commit()
         flash(MENSAGEM_SSO_NEGADO, "danger")
         return redirect(url_for("auth.login"))
 
     if usuario is None:
+        registrar_auditoria(
+            usuario=None, acao="LOGIN_FALHA", resultado="FALHA",
+            descricao="Login via OIDC negado: usuário sem perfil mapeado ou inativo.",
+        )
+        db.session.commit()
         flash(MENSAGEM_SSO_NEGADO, "danger")
         return redirect(url_for("auth.login"))
 

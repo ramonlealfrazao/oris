@@ -12,7 +12,7 @@ class Auditoria(db.Model):
     usuario_id = db.Column(
         db.Integer,
         db.ForeignKey("usuarios.id"),
-        nullable=False,
+        nullable=True,  # tentativa de login com usuario inexistente nao tem usuario
         index=True,
     )
 
@@ -28,6 +28,12 @@ class Auditoria(db.Model):
     valor_novo = db.Column(db.Text, nullable=True)
 
     data_hora = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+    # DE ONDE e RESULTADO (elementos obrigatorios de um audit trail).
+    origem_ip = db.Column(db.String(45), nullable=True)  # 45 = IPv6 completo
+    resultado = db.Column(db.String(10), nullable=False, default="SUCESSO", server_default="SUCESSO")
+    # So para LOGIN_FALHA/LOGIN_BLOQUEADO: o identificador digitado (nunca a senha).
+    identificador_tentado = db.Column(db.String(255), nullable=True)
 
 
     usuario = db.relationship("Usuario", back_populates="auditorias")

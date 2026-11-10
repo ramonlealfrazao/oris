@@ -32,6 +32,11 @@ class Config:
     SESSION_LIFETIME_MINUTES = int(os.getenv("SESSION_LIFETIME_MINUTES", "60"))
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=SESSION_LIFETIME_MINUTES)
 
+    # Quantos proxies reversos CONFIAVEIS ficam na frente da app (0 = nenhum).
+    # So com >0 o X-Forwarded-For/Proto/Host e aceito (ProxyFix); caso contrario
+    # o cabecalho seria forjavel e o IP da auditoria/rate limit nao valeria nada.
+    TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "0"))
+
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
 
@@ -87,7 +92,10 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SESSION_COOKIE_SECURE = True  # exige HTTPS em produção
+    # Exige HTTPS em produção. So desliga se SESSION_COOKIE_SECURE=false for
+    # definido de forma EXPLICITA (ex.: demonstracao em http://localhost via
+    # Docker). Sem a variavel, o padrao seguro (True) vale.
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "true").strip().lower() != "false"
 
 
 class TestingConfig(Config):

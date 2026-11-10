@@ -9,6 +9,7 @@ S3 é um cliente falso injetado no lugar do boto3.
 
 import base64
 import json
+import time
 import urllib.parse
 
 import pytest
@@ -29,6 +30,7 @@ from app.models import (
     Usuario,
 )
 from app.services import armazenamento_service, oidc_service
+from tests.oidc_helpers import assinar, gerar_chave_privada, jwks_de
 from app.services.diretorio_service import (
     DiretorioConfigError,
     UsuarioExterno,
@@ -321,11 +323,12 @@ def test_comando_cli_sincronizar_ldap_esta_registrado(app):
 ISSUER = "https://idp.exemplo.test/realms/oris"
 
 
-def _jwt(claims):
-    def b64(dado):
-        return base64.urlsafe_b64encode(json.dumps(dado).encode()).rstrip(b"=").decode()
+_CHAVE_OIDC = gerar_chave_privada()
 
-    return f"{b64({'alg': 'RS256'})}.{b64(claims)}.assinatura"
+
+def _jwt(claims):
+    """id_token assinado (RS256) com a chave de teste; o JWKS dela é servido por `fake_get`."""
+    return assinar(claims, _CHAVE_OIDC)
 
 
 @pytest.fixture
@@ -339,7 +342,10 @@ def oidc(app, monkeypatch):
                 "authorization_endpoint": f"{ISSUER}/auth",
                 "token_endpoint": f"{ISSUER}/token",
                 "userinfo_endpoint": f"{ISSUER}/userinfo",
+                "jwks_uri": f"{ISSUER}/jwks",
             }
+        if url.endswith("/jwks"):
+            return jwks_de(_CHAVE_OIDC)
         return contexto["userinfo"]
 
     def fake_post(url, dados):
@@ -361,6 +367,7 @@ def _iniciar(client):
 def _claims(parametros, **extra):
     base = {
         "iss": ISSUER, "aud": "oris-web", "sub": "u-123", "nonce": parametros["nonce"],
+        "iat": int(time.time()), "exp": int(time.time()) + 300,
         "email": "dora@rede.gov", "email_verified": True, "name": "Dora OIDC", "groups": ["oris-gestao"],
     }
     base.update(extra)

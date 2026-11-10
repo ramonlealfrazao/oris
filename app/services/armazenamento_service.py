@@ -9,6 +9,8 @@ requisições são assinadas com AWS Signature V4 pelo próprio boto3.
 
 PROTEÇÕES:
 - criptografia em repouso (SSE-S3, AES256) em todo objeto enviado;
+- integridade: o envio leva o SHA-256 do conteúdo (ChecksumSHA256) e o S3
+  recusa o objeto se ele chegar diferente; o hash também vai como metadado;
 - a chave do objeto é montada só com valores controlados pelo sistema
   (prefixo de configuração + entidade da lista fixa + data + UUID) —
   nenhum texto vindo do usuário entra no caminho;
@@ -23,6 +25,7 @@ import uuid
 from flask import current_app
 
 from app.utils.datetime_utils import utcnow
+from app.utils.integridade import sha256_base64, sha256_hex
 
 
 class ArmazenamentoError(Exception):
@@ -69,6 +72,9 @@ def enviar_relatorio(conteudo, entidade, cliente=None, config=None):
             Body=conteudo,
             ContentType="text/csv; charset=utf-8",
             ServerSideEncryption="AES256",
+            ChecksumAlgorithm="SHA256",
+            ChecksumSHA256=sha256_base64(conteudo),
+            Metadata={"sha256": sha256_hex(conteudo)},
         )
     except Exception as erro:
         current_app.logger.exception("Falha ao enviar relatório ao S3")

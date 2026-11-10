@@ -525,6 +525,14 @@ python -m pytest tests/test_etapa03_bd.py            # sem MySQL (catálogo e RB
 ORIS_TEST_MYSQL=1 python -m pytest tests/test_etapa03_bd.py   # + integração com MySQL
 ```
 
+## Rodar com Docker (app + MySQL 8)
+
+```bash
+docker compose up --build
+```
+
+Abra http://localhost:5000 (login demo: `admin.demo@oris.example` / `Oris@2026`). O banco não é exposto ao computador; `docker compose down -v` zera os dados. Guia completo, roteiro de apresentação e solução de problemas: `docs/APRESENTACAO_DOCKER.md`.
+
 ## Etapa 06 - Versão final: dashboard, rotinas do banco e 4 tabelas no CRUD
 
 Entrega da versão definitiva integrada ao MySQL. Tudo que aparece nas telas abaixo

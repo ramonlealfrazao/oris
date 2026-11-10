@@ -30,6 +30,12 @@ def listar():
     if usuario_id_filtro:
         query = query.filter(Auditoria.usuario_id == usuario_id_filtro)
 
+    resultado_filtro = request.args.get("resultado")
+    if resultado_filtro in ("SUCESSO", "FALHA"):
+        query = query.filter(Auditoria.resultado == resultado_filtro)
+    else:
+        resultado_filtro = None
+
     acao_filtro = request.args.get("acao")
     if acao_filtro:
         query = query.filter(Auditoria.acao == acao_filtro)
@@ -55,6 +61,7 @@ def listar():
         acoes_disponiveis=acoes_disponiveis,
         usuario_id_filtro=usuario_id_filtro,
         acao_filtro=acao_filtro,
+        resultado_filtro=resultado_filtro,
         tabela_filtro=tabela_filtro,
         data_filtro=data_filtro,
     )

@@ -1,0 +1,23 @@
+# Igual ao Caddyfile, mais o Keycloak (OIDC) em kc.<dominio>. O console de administracao
+# e o realm "master" NAO ficam expostos na internet (403).
+{$ORIS_DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	reverse_proxy app:5000
+}
+
+kc.{$ORIS_DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	@admin path /admin* /realms/master*
+	respond @admin 403
+	reverse_proxy keycloak:8080
+}

@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS alteracoes (
 -- ou senha_hash.
 CREATE TABLE IF NOT EXISTS auditorias (
     id INT NOT NULL AUTO_INCREMENT,
-    usuario_id INT NOT NULL,
+    usuario_id INT NULL,
     acao VARCHAR(100) NOT NULL,
     tabela VARCHAR(100) NULL,
     registro_id INT NULL,
@@ -202,6 +202,9 @@ CREATE TABLE IF NOT EXISTS auditorias (
     valor_anterior TEXT NULL,
     valor_novo TEXT NULL,
     data_hora DATETIME NOT NULL,
+    origem_ip VARCHAR(45) NULL,
+    resultado VARCHAR(10) NOT NULL DEFAULT 'SUCESSO',
+    identificador_tentado VARCHAR(255) NULL,
     PRIMARY KEY (id),
     KEY ix_auditorias_usuario_id (usuario_id),
     CONSTRAINT fk_auditorias_usuario
