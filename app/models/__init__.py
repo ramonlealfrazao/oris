@@ -6,7 +6,9 @@ from app.models.enums import (
     SituacaoAtivoInativo,
     SituacaoUnidade,
     StatusAlteracao,
+    StatusSolicitacaoTitular,
     TipoOperacaoAlteracao,
+    TipoSolicitacaoTitular,
 )
 from app.models.grupo import Grupo, usuario_grupos
 from app.models.usuario import Usuario
@@ -17,6 +19,7 @@ from app.models.alteracao import Alteracao
 from app.models.manutencao import Manutencao
 from app.models.manutencao import Manutencao
 from app.models.auditoria import Auditoria
+from app.models.solicitacao_titular import SolicitacaoTitular
 
 __all__ = [
     "Grupo",
@@ -30,6 +33,9 @@ __all__ = [
     "Manutencao",
     "Manutencao",
     "Auditoria",
+    "SolicitacaoTitular",
+    "StatusSolicitacaoTitular",
+    "TipoSolicitacaoTitular",
     "PerfilUsuario",
     "SituacaoUnidade",
     "SituacaoAtivoInativo",
