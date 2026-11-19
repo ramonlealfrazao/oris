@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Pedidos de titulares — ORIS{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}">Início</a>
+    <span aria-hidden="true">/</span>
+    <span class="oris-breadcrumb-current">Pedidos de titulares</span>
+{% endblock %}
+
+{% block content %}
+<div class="oris-page-header">
+    <div>
+        <h1>Pedidos de titulares</h1>
+        <p>Pedidos feitos pelos usuários com base no art. 18 da LGPD.</p>
+    </div>
+</div>
+
+<div class="oris-panel">
+    {% if solicitacoes %}
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>#</th><th>Titular</th><th>Tipo</th><th>Situação</th><th>Prazo</th><th class="text-end">Ações</th></tr></thead>
+            <tbody>
+            {% for s in solicitacoes %}
+                <tr>
+                    <td>{{ s.id }}</td>
+                    <td>{{ s.titular.nome }}</td>
+                    <td>{{ s.tipo|rotulo_tipo_solicitacao }}</td>
+                    <td>
+                        {% if s.status.value == "ABERTA" %}
+                            <span class="badge bg-warning text-dark">Aberta</span>
+                            {% if s|solicitacao_vencida %}<span class="badge bg-danger">Vencida</span>{% endif %}
+                        {% elif s.status.value == "ATENDIDA" %}<span class="badge bg-success">Atendida</span>
+                        {% else %}<span class="badge bg-secondary">Negada</span>{% endif %}
+                    </td>
+                    <td>{{ s.prazo_resposta.strftime("%d/%m/%Y") }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('lgpd.solicitacao', solicitacao_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Abrir</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Nenhum pedido registrado até agora.</p>
+    {% endif %}
+</div>
+{% endblock %}

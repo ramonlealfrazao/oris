@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} — Governança — ORIS{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}">Início</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ url_for('governanca.index') }}">Governança</a>
+    <span aria-hidden="true">/</span>
+    <span class="oris-breadcrumb-current">{{ titulo }}</span>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/governanca.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="oris-page-header">
+    <div>
+        <h1>{{ titulo }}</h1>
+    </div>
+</div>
+
+{% include "governanca/_nav.html" %}
+
+{% if chave == "riscos" %}
+<div class="oris-panel mb-4">
+    <h2 class="oris-section-label">Matriz de riscos</h2>
+    <p class="text-muted">{{ escala }}</p>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>ID</th><th>Risco</th><th>Origem</th><th class="text-center">P</th><th class="text-center">I</th><th class="text-center">Nível</th></tr></thead>
+            <tbody>
+            {% for r in riscos %}
+                <tr>
+                    <td>{{ r.id }}</td><td>{{ r.risco }}</td><td>{{ r.origem }}</td>
+                    <td class="text-center">{{ r.p }}</td><td class="text-center">{{ r.i }}</td>
+                    <td class="text-center nivel-{{ r.classe }}">{{ r.nivel }} {{ r.classe|replace("medio", "médio") }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="oris-panel mb-4">
+    <h2 class="oris-section-label">Mapa de calor</h2>
+    <table class="oris-mapa" aria-label="Mapa de calor de riscos: impacto nas linhas, probabilidade nas colunas">
+        <thead>
+            <tr><th></th><th></th><th colspan="5">Probabilidade</th></tr>
+            <tr><th></th><th></th>{% for n in range(1, 6) %}<th>{{ n }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+        {% for linha in mapa %}
+            <tr>
+                {% if loop.first %}<th rowspan="5">Impacto</th>{% endif %}
+                <th>{{ linha.impacto }}</th>
+                {% for c in linha.celulas %}<td class="nivel-{{ c.classe }}">{{ c.ids|join(" ") }}</td>{% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="oris-panel">
+    <h2 class="oris-section-label">Plano de mitigação</h2>
+    <p class="text-muted">Prazo curto: até 2 semanas. Médio: até 60 dias. A última coluna diz se a ação mexe no sistema; quando mexe, deve ser feita em branch separada e testada antes.</p>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Risco</th><th>Ação</th><th>Responsável</th><th>Prazo</th><th>Mexe no sistema?</th></tr></thead>
+            <tbody>
+            {% for m in mitigacao %}
+                <tr><td>{{ m.risco }}</td><td>{{ m.acao }}</td><td>{{ m.responsavel }}</td><td>{{ m.prazo }}</td><td>{{ m.mexe }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% elif chave == "raci" %}
+<div class="oris-panel">
+    <p class="text-muted">{{ legenda }}</p>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle oris-raci mb-0">
+            <thead><tr><th>Processo</th>{% for c in colunas %}<th class="text-center">{{ c }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for processo, celulas in linhas %}
+                <tr><td>{{ processo }}</td>{% for v in celulas %}<td class="celula">{{ v }}</td>{% endfor %}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% elif chave == "cobit" %}
+<div class="oris-panel">
+    <p class="text-muted">{{ nota }}</p>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Objetivo COBIT 2019</th><th>O que o ORIS tem</th><th>O que falta</th></tr></thead>
+            <tbody>
+            {% for objetivo, tem, falta in objetivos %}
+                <tr><td>{{ objetivo }}</td><td>{{ tem }}</td><td>{{ falta }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% elif chave == "auditoria" %}
+<div class="oris-panel mb-4">
+    <h2 class="oris-section-label">Plano de auditoria</h2>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Frequência</th><th>Verificação</th><th>Como evidenciar</th><th>Responsável</th></tr></thead>
+            <tbody>
+            {% for freq, verificacao, evidencia, resp in plano %}
+                <tr><td>{{ freq }}</td><td>{{ verificacao }}</td><td>{{ evidencia }}</td><td>{{ resp }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if usuario_logado and usuario_logado.perfil.value in ["ADMINISTRADOR", "GESTAO_INFORMACAO"] %}
+    <h3 class="h6 mt-3">Atalhos para a trilha</h3>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        {% for rotulo, endpoint, params in atalhos %}
+            {% if endpoint != 'lgpd.solicitacoes' or usuario_logado.perfil.value == "ADMINISTRADOR" %}
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for(endpoint, **params) }}">{{ rotulo }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    <h3 class="h6">Checklist de cada revisão</h3>
+    <ul class="mb-0">{% for item in checklist %}<li>{{ item }}</li>{% endfor %}</ul>
+</div>
+
+<div class="oris-panel">
+    <h2 class="oris-section-label">Trilha de auditoria</h2>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Elemento</th><th>Campo(s)</th><th>Observação</th></tr></thead>
+            <tbody>
+            {% for elemento, campos, obs in elementos %}
+                <tr><td>{{ elemento }}</td><td><code>{{ campos }}</code></td><td>{{ obs }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <h3 class="h6">Como a integridade é garantida</h3>
+    <ul class="mb-0">{% for item in integridade %}<li>{{ item }}</li>{% endfor %}</ul>
+</div>
+
+{% elif chave == "etica" %}
+<div class="oris-panel">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Dilema</th><th>Por que importa no ORIS</th><th>Posição recomendada</th></tr></thead>
+            <tbody>
+            {% for dilema, porque, posicao in dilemas %}
+                <tr><td>{{ dilema }}</td><td>{{ porque }}</td><td>{{ posicao }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<div class="oris-panel">
+    <p>{{ intro }}</p>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Camada</th><th>Responsabilidade da AWS</th><th>Responsabilidade do grupo</th><th>Situação</th></tr></thead>
+            <tbody>
+            {% for camada, aws, grupo, situacao in camadas %}
+                <tr><td>{{ camada }}</td><td>{{ aws }}</td><td>{{ grupo }}</td><td>{{ situacao }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted small mb-0">{{ nota }}</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -91,6 +91,20 @@
                    href="{{ url_for('importacao.index') }}">
                     <i class="bi bi-file-earmark-arrow-up"></i> <span>Importar</span>
                 </a>
+                <a class="oris-nav-item {% if request.blueprint == 'governanca' %}active{% endif %}"
+                   href="{{ url_for('governanca.index') }}">
+                    <i class="bi bi-diagram-3"></i> <span>Governança</span>
+                </a>
+                <a class="oris-nav-item {% if request.endpoint in ('lgpd.meus_dados',) %}active{% endif %}"
+                   href="{{ url_for('lgpd.meus_dados') }}">
+                    <i class="bi bi-person-lock"></i> <span>Meus dados</span>
+                </a>
+                {% if usuario_logado and usuario_logado.perfil.value == "ADMINISTRADOR" %}
+                <a class="oris-nav-item {% if request.endpoint in ('lgpd.solicitacoes', 'lgpd.solicitacao') %}active{% endif %}"
+                   href="{{ url_for('lgpd.solicitacoes') }}">
+                    <i class="bi bi-inbox"></i> <span>Pedidos de titulares</span>
+                </a>
+                {% endif %}
                 {% if usuario_logado and usuario_logado.perfil.value == "ADMINISTRADOR" %}
                 <a class="oris-nav-item {% if request.blueprint == 'usuarios' %}active{% endif %}"
                    href="{{ url_for('usuarios.listar') }}">

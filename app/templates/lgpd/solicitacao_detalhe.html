@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Pedido #{{ item.id }} — ORIS{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}">Início</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ url_for('lgpd.solicitacoes') }}">Pedidos de titulares</a>
+    <span aria-hidden="true">/</span>
+    <span class="oris-breadcrumb-current">Pedido #{{ item.id }}</span>
+{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('lgpd.solicitacoes') }}" class="oris-back-link">
+    <i class="bi bi-arrow-left" aria-hidden="true"></i> Voltar para os pedidos
+</a>
+
+<div class="oris-page-header">
+    <div>
+        <h1>Pedido #{{ item.id }} — {{ item.tipo|rotulo_tipo_solicitacao }}</h1>
+        <p>Feito por {{ item.titular.nome }} em {{ item.criada_em.strftime("%d/%m/%Y") }}. Prazo: {{ item.prazo_resposta.strftime("%d/%m/%Y") }}.</p>
+    </div>
+</div>
+
+<div class="oris-panel mb-4">
+    <h2 class="oris-section-label">Pedido</h2>
+    <p class="mb-0">{{ item.descricao }}</p>
+</div>
+
+{% if item.status.value == "ABERTA" %}
+    {% if pode_anonimizar %}
+    <div class="oris-panel mb-4">
+        <h2 class="oris-section-label">Anonimizar a conta</h2>
+        <p>Troca nome e e-mail por valores anônimos, invalida a senha, remove os grupos e desativa a conta. A trilha de auditoria continua ligada ao número da conta. Não dá para desfazer.</p>
+        <form method="post" action="{{ url_for('lgpd.anonimizar', solicitacao_id=item.id) }}"
+              onsubmit="return confirm('Anonimizar esta conta? Não dá para desfazer.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger">Anonimizar conta</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="oris-panel">
+        <h2 class="oris-section-label">Responder ao titular</h2>
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.decisao.label(class="form-label") }}
+                {{ form.decisao(class="form-select") }}
+            </div>
+            <div class="mb-3">
+                {{ form.resposta.label(class="form-label") }}
+                {{ form.resposta(class="form-control", rows=4, required=True) }}
+                {% for erro in form.resposta.errors %}<div class="text-danger small">{{ erro }}</div>{% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+        </form>
+    </div>
+{% else %}
+    <div class="oris-panel">
+        <h2 class="oris-section-label">Resposta</h2>
+        <p><strong>{{ "Atendido" if item.status.value == "ATENDIDA" else "Negado" }}</strong>
+           em {{ item.respondida_em.strftime("%d/%m/%Y") }}
+           {% if item.responsavel %}por {{ item.responsavel.nome }}{% endif %}.</p>
+        <p class="mb-0">{{ item.resposta }}</p>
+    </div>
+{% endif %}
+{% endblock %}

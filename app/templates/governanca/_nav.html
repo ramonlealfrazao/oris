@@ -1,0 +1,6 @@
+<nav class="oris-gov-nav" aria-label="Seções da governança">
+    <a href="{{ url_for('governanca.index') }}" class="{% if request.endpoint == 'governanca.index' %}active{% endif %}">ISO 38500</a>
+    {% for k, nome in secoes.items() %}
+    <a href="{{ url_for('governanca.secao', chave=k) }}" class="{% if chave is defined and chave == k %}active{% endif %}">{{ nome }}</a>
+    {% endfor %}
+</nav>

@@ -51,3 +51,20 @@ class TipoOperacaoAlteracao(str, enum.Enum):
     CRIAR = "CRIAR"
     EDITAR = "EDITAR"
     ALTERAR_SITUACAO = "ALTERAR_SITUACAO"
+
+
+class TipoSolicitacaoTitular(str, enum.Enum):
+    """Direitos do titular previstos no art. 18 da LGPD."""
+
+    ACESSO = "ACESSO"
+    CORRECAO = "CORRECAO"
+    ELIMINACAO = "ELIMINACAO"
+    PORTABILIDADE = "PORTABILIDADE"
+    COMPARTILHAMENTO = "COMPARTILHAMENTO"
+    OPOSICAO = "OPOSICAO"
+
+
+class StatusSolicitacaoTitular(str, enum.Enum):
+    ABERTA = "ABERTA"
+    ATENDIDA = "ATENDIDA"
+    NEGADA = "NEGADA"

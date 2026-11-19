@@ -301,3 +301,35 @@ class RedefinirSenhaForm(FlaskForm):
     def validate_confirmar_senha(self, field):
         if field.data != self.nova_senha.data:
             raise ValidationError("As senhas informadas não conferem.")
+
+
+TIPOS_SOLICITACAO_TITULAR = [
+    ("ACESSO", "Acesso e confirmação dos meus dados"),
+    ("CORRECAO", "Correção de dados incompletos ou desatualizados"),
+    ("ELIMINACAO", "Anonimização ou eliminação dos meus dados"),
+    ("PORTABILIDADE", "Portabilidade dos meus dados"),
+    ("COMPARTILHAMENTO", "Informação sobre com quem meus dados são compartilhados"),
+    ("OPOSICAO", "Oposição a um tratamento"),
+]
+
+
+class SolicitacaoTitularForm(FlaskForm):
+    tipo = SelectField("Tipo de pedido", choices=TIPOS_SOLICITACAO_TITULAR, validators=[DataRequired()])
+    descricao = TextAreaField(
+        "Detalhes do pedido",
+        validators=[DataRequired(message="Descreva o seu pedido."), Length(max=2000)],
+    )
+    submit = SubmitField("Enviar pedido")
+
+
+class RespostaSolicitacaoForm(FlaskForm):
+    decisao = SelectField(
+        "Decisão",
+        choices=[("ATENDIDA", "Atender"), ("NEGADA", "Negar")],
+        validators=[DataRequired()],
+    )
+    resposta = TextAreaField(
+        "Resposta ao titular",
+        validators=[DataRequired(message="Escreva a resposta ao titular."), Length(max=2000)],
+    )
+    submit = SubmitField("Registrar resposta")

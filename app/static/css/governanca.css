@@ -1,0 +1,80 @@
+.oris-gov-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.oris-gov-nav a {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--oris-border);
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.oris-gov-nav a.active {
+    background: var(--oris-navy);
+    border-color: var(--oris-navy);
+    color: #fff;
+}
+
+.oris-principio {
+    margin-bottom: 1.25rem;
+}
+
+.oris-principio-numeros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+}
+
+.oris-principio-numeros div {
+    min-width: 8.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #f4f7f9;
+    border-radius: 8px;
+}
+
+.oris-principio-numeros strong {
+    display: block;
+    font-size: 1.25rem;
+}
+
+.oris-principio-numeros span {
+    font-size: 0.8rem;
+    color: #5b6770;
+}
+
+.oris-mapa {
+    border-collapse: separate;
+    border-spacing: 3px;
+    margin: 0.5rem auto;
+}
+
+.oris-mapa td {
+    width: 5.5rem;
+    height: 2.6rem;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.oris-mapa th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 0 0.4rem;
+}
+
+.nivel-alto { background: #f4b6b6; }
+.nivel-medio { background: #fbe3a6; }
+.nivel-baixo { background: #cfe8c7; }
+
+.oris-raci td.celula { text-align: center; font-weight: 600; }
+
+.table td.nivel-alto { --bs-table-bg: #f4b6b6; --bs-table-bg-type: #f4b6b6; }
+.table td.nivel-medio { --bs-table-bg: #fbe3a6; --bs-table-bg-type: #fbe3a6; }
+.table td.nivel-baixo { --bs-table-bg: #cfe8c7; --bs-table-bg-type: #cfe8c7; }
