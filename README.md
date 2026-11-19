@@ -158,6 +158,14 @@ controles implementados:
 - Headers HTTP de segurança em toda resposta
   (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
   `Content-Security-Policy` básica).
+- **MFA (TOTP) obrigatório para todos os perfis** no login local: a senha
+  só libera a segunda etapa; no 1º login cada usuário lê um QR code com
+  um aplicativo autenticador (Google/Microsoft Authenticator, Authy) e
+  recebe 8 códigos de recuperação de uso único. O segredo fica cifrado no
+  banco; cada código vale uma vez; 5 códigos errados bloqueiam a etapa.
+  O ADMINISTRADOR redefine o MFA de quem perdeu o celular (tela de edição
+  do usuário). Contas LDAP/OIDC fazem o OTP no Keycloak.
+  `MFA_OBRIGATORIO=false` no `.env` desliga (não recomendado).
 - Rate limiting leve de login (em memória, por processo): bloqueia
   temporariamente após 5 tentativas malsucedidas para o mesmo (IP,
   email) em 5 minutos.
@@ -624,6 +632,10 @@ O `iniciar.py` pode ser repetido sem problema e faz, nesta ordem:
 4. cria as tabelas, funções, procedures, triggers e views;
 5. pergunta se quer carregar os dados fictícios de demonstração e os usuários de teste;
 6. sobe o sistema em http://127.0.0.1:5000 e abre o navegador.
+
+**Primeiro login:** o MFA é obrigatório. Depois da senha, o ORIS mostra um QR code:
+leia com um aplicativo autenticador no celular, digite o código de 6 dígitos e guarde os
+códigos de recuperação que aparecem.
 
 Opções: `python iniciar.py --sem-seed` (não carrega dados de demonstração) e
 `python iniciar.py --so-preparar` (prepara tudo, mas não liga o servidor).

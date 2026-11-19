@@ -45,6 +45,10 @@ class Config:
 
     RATE_LIMIT_LOGIN_ENABLED = True
 
+    # MFA (TOTP) obrigatorio no login local, para TODOS os perfis. Contas LDAP/OIDC
+    # fazem o segundo fator no provedor (Keycloak). Desligar so em casos excepcionais.
+    MFA_OBRIGATORIO = os.getenv("MFA_OBRIGATORIO", "true").strip().lower() == "true"
+
     # --- Diretório externo: LDAP e OIDC (Requisito 3) ---
     # Nada sensível fica no código: tudo vem do .env. Mapeamento
     # grupo -> perfil RBAC, em JSON, ex.:
@@ -104,6 +108,8 @@ class TestingConfig(Config):
     DEBUG = True
     WTF_CSRF_ENABLED = False
     RATE_LIMIT_LOGIN_ENABLED = False
+    # A suite antiga faz login so com senha; os testes do MFA ligam isto explicitamente.
+    MFA_OBRIGATORIO = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     DATA_ENCRYPTION_KEY = "8YUlDwN5PXNRQGa8BFCUZkwAA95sjPiITg3aJ8u0MZs="
 

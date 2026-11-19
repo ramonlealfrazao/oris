@@ -37,6 +37,8 @@ Abrir `https://<ORIS_DOMAIN>`. A primeira emissão do certificado leva ~1 minuto
 
 ## Cuidados
 
+- **MFA obrigatório.** Login local: no 1º acesso cada usuário (inclusive os `@oris.example`) lê um QR code com um aplicativo autenticador; tenha um celular à mão na apresentação. SSO: o realm do Keycloak exige OTP (`CONFIGURE_TOTP`), mas o Keycloak **só importa o realm na primeira criação**. Num Keycloak já existente, regenere o realm (`gerar-realm.py`) e recrie o contêiner do Keycloak (e o volume de dados dele, se houver), ou, no console admin, marque "Configure OTP" como ação obrigatória dos usuários do realm `oris`. A imagem do app precisa ser reconstruída (`up -d --build`), por causa das bibliotecas novas (`pyotp`, `segno`).
+
 - **`DATA_ENCRYPTION_KEY` é obrigatória** desde a criptografia de dados (uploads e alterações pendentes). Num servidor já implantado, antes do `git pull` + `up -d --build`, acrescente-a ao `.env.aws` (comando da seção "Segredos") e **guarde uma cópia segura**: trocar ou perder a chave torna ilegíveis os dados já cifrados. Sem ela o `docker compose` recusa subir, com a mensagem "defina DATA_ENCRYPTION_KEY".
 
 - O **Learner Lab desliga o servidor** ao fim da sessão (~4 h). Ao religar, o IP elástico e os dados continuam; os contêineres sobem sozinhos (`restart: unless-stopped`).

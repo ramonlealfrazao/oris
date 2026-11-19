@@ -29,6 +29,16 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Entrar")
 
 
+class MfaCodigoForm(FlaskForm):
+    """Segunda etapa do login: código de 6 dígitos do aplicativo ou código de recuperação."""
+
+    codigo = StringField(
+        "Código",
+        validators=[DataRequired(message="Informe o código."), Length(min=6, max=20, message="Código inválido.")],
+    )
+    submit = SubmitField("Confirmar")
+
+
 class UnidadeForm(FlaskForm):
     """Formulário de cadastro/edição de Unidade de Saúde Bucal."""
 

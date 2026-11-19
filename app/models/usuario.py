@@ -37,6 +37,16 @@ class Usuario(db.Model, TimestampMixin):
     # do OIDC). Nulo para contas LOCAL.
     identificador_externo = db.Column(db.String(255), nullable=True, index=True)
 
+    # --- MFA (TOTP) do login local - app/services/mfa_service.py ---
+    # Contas LDAP/OIDC fazem o segundo fator no provedor (Keycloak).
+    mfa_ativo = db.Column(db.Boolean, nullable=False, default=False)
+    # Segredo TOTP cifrado com DATA_ENCRYPTION_KEY (Fernet); nunca em texto puro.
+    mfa_segredo = db.Column(db.Text, nullable=True)
+    # Último intervalo de 30 s aceito: impede reusar o mesmo código (replay).
+    mfa_ultimo_passo = db.Column(db.BigInteger, nullable=True)
+    # JSON com o SHA-256 dos códigos de recuperação ainda não usados.
+    mfa_codigos_recuperacao = db.Column(db.Text, nullable=True)
+
     # --- Relacionamentos ---
 
     grupos = db.relationship("Grupo", secondary=usuario_grupos, back_populates="usuarios")

@@ -5,6 +5,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from app.extensions import db
 from app.forms import AcaoAlteracaoForm, CriarUsuarioForm, EditarUsuarioForm, RedefinirSenhaForm
 from app.models import PerfilUsuario, Usuario
+from app.services import mfa_service
 from app.services.auditoria_service import registrar_auditoria
 from app.utils.decorators import roles_required, usuario_atual
 from app.utils.security import gerar_hash_senha
@@ -177,6 +178,7 @@ def editar(usuario_id):
         titulo=f"Editar Usuário — {usuario.nome}",
         usuario=usuario,
         form_senha=RedefinirSenhaForm(),
+        form_mfa=AcaoAlteracaoForm(),
     )
 
 
@@ -244,4 +246,33 @@ def redefinir_senha(usuario_id):
     db.session.commit()
 
     flash(f"Senha do usuário '{usuario.nome}' redefinida com sucesso.", "success")
+    return redirect(url_for("usuarios.editar", usuario_id=usuario.id))
+
+
+@usuarios_bp.route("/<int:usuario_id>/mfa/redefinir", methods=["POST"])
+@roles_required(PERFIL_ADMINISTRADOR)
+def redefinir_mfa(usuario_id):
+    """Apaga o MFA de quem perdeu o celular: no próximo login a pessoa cadastra de novo."""
+    usuario = _buscar_usuario_ou_404(usuario_id)
+    form = AcaoAlteracaoForm()
+    if not form.validate_on_submit():
+        flash("Não foi possível processar a solicitação.", "danger")
+        return redirect(url_for("usuarios.editar", usuario_id=usuario.id))
+
+    if not usuario.mfa_ativo and not usuario.mfa_segredo:
+        flash("Este usuário ainda não cadastrou a verificação em dois fatores.", "warning")
+        return redirect(url_for("usuarios.editar", usuario_id=usuario.id))
+
+    mfa_service.redefinir(usuario)
+    registrar_auditoria(
+        usuario=usuario_atual(),
+        acao="MFA_REDEFINIDO",
+        tabela="usuarios",
+        registro_id=usuario.id,
+        descricao=f"MFA redefinido pelo administrador para '{usuario.nome}' ({usuario.email}); "
+                  "o usuário cadastra um novo aplicativo no próximo login.",
+    )
+    db.session.commit()
+
+    flash(f"MFA de '{usuario.nome}' redefinido. No próximo login ele cadastra o aplicativo de novo.", "success")
     return redirect(url_for("usuarios.editar", usuario_id=usuario.id))
