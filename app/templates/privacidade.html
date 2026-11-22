@@ -22,43 +22,97 @@
 <section class="oris-privacidade-hero">
     <h1><i class="bi bi-shield-lock" aria-hidden="true"></i> Privacidade e Transparência</h1>
     <p>
-        Esta página descreve, de forma resumida, como o ORIS trata dados no
-        âmbito deste projeto. Ela não substitui uma política de privacidade
-        formal a ser publicada pelo órgão responsável pelo sistema.
+        Como o ORIS trata dados pessoais, com base na Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
     </p>
 </section>
+
+<div class="oris-privacidade-section">
+    <div class="oris-privacidade-icon"><i class="bi bi-building" aria-hidden="true"></i></div>
+    <div class="oris-privacidade-section-body">
+        <h2 class="oris-section-label">Controlador e encarregado</h2>
+        <p><strong>Controlador:</strong> {{ t.controlador }}.</p>
+        {% if t.encarregado_nome or t.encarregado_email %}
+        <p class="mb-0"><strong>Encarregado de dados:</strong> {{ t.encarregado_nome or "—" }}{% if t.encarregado_email %} — <a href="mailto:{{ t.encarregado_email }}">{{ t.encarregado_email }}</a>{% endif %}</p>
+        {% else %}
+        <p class="mb-0"><strong>Encarregado de dados:</strong> ainda não designado pelo controlador. Enquanto isso, os pedidos feitos em
+        {% if session.autenticado %}<a href="{{ url_for('lgpd.meus_dados') }}">Meus dados</a>{% else %}Meus dados (depois do login){% endif %}
+        chegam ao Administrador do sistema.</p>
+        {% endif %}
+    </div>
+</div>
 
 <div class="oris-privacidade-section">
     <div class="oris-privacidade-icon"><i class="bi bi-bullseye" aria-hidden="true"></i></div>
     <div class="oris-privacidade-section-body">
         <h2 class="oris-section-label">Finalidade do sistema</h2>
         <p class="mb-0">
-            O ORIS existe para apoiar a <strong>gestão e governança das
-            informações da Rede de Saúde Bucal</strong>: organizar o cadastro de
-            Unidades, Serviços e Equipamentos, controlar alterações através de um
-            fluxo de solicitação/aprovação, manter uma trilha de auditoria das
-            ações realizadas, e oferecer uma visão consolidada (dashboard) da
-            situação da rede. O sistema não trata prontuários, dados clínicos,
-            diagnósticos ou qualquer informação de pacientes — isso está fora do
-            escopo deste MVP.
+            O ORIS existe para apoiar a gestão e governança das informações da Rede de Saúde Bucal:
+            organizar o cadastro de Unidades, Serviços e Equipamentos, controlar alterações por um fluxo
+            de solicitação e aprovação, manter uma trilha de auditoria e oferecer uma visão consolidada
+            da situação da rede. O sistema não trata prontuários, dados clínicos, diagnósticos nem
+            informações de pacientes.
         </p>
     </div>
 </div>
 
 <div class="oris-privacidade-section">
-    <div class="oris-privacidade-icon"><i class="bi bi-folder2-open" aria-hidden="true"></i></div>
+    <div class="oris-privacidade-icon"><i class="bi bi-journal-text" aria-hidden="true"></i></div>
     <div class="oris-privacidade-section-body">
-        <h2 class="oris-section-label">Categorias de dados tratados</h2>
-        <p>O ORIS trabalha, hoje, principalmente com:</p>
-        <ul>
-            <li>Dados administrativos da rede: unidades, serviços e equipamentos de Saúde Bucal;</li>
-            <li>Dados de identificação e acesso dos usuários do sistema: nome, email, perfil e situação (ativo/inativo);</li>
-            <li>Registros de auditoria da atividade desses usuários (quem fez o quê, quando, e em qual registro).</li>
+        <h2 class="oris-section-label">Dados tratados e para quê</h2>
+        <p>Não são coletados CPF, telefone nem endereço residencial. Só o necessário para identificar e controlar o acesso.</p>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Dado</th><th>Titular</th><th>Finalidade</th><th>Onde fica</th><th>Retenção</th><th>Compartilhamento</th></tr></thead>
+                <tbody>
+                {% for op in t.operacoes %}
+                    <tr>
+                        <td>{{ op.dado }}</td><td>{{ op.titular }}</td><td>{{ op.finalidade }}</td>
+                        <td>{{ op.onde }}</td><td>{{ op.retencao }}</td><td>{{ op.compartilhamento }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="oris-privacidade-section">
+    <div class="oris-privacidade-icon"><i class="bi bi-bank" aria-hidden="true"></i></div>
+    <div class="oris-privacidade-section-body">
+        <h2 class="oris-section-label">Base legal</h2>
+        <p class="mb-0">{{ t.base_legal }}</p>
+    </div>
+</div>
+
+<div class="oris-privacidade-section">
+    <div class="oris-privacidade-icon"><i class="bi bi-diagram-3" aria-hidden="true"></i></div>
+    <div class="oris-privacidade-section-body">
+        <h2 class="oris-section-label">Operadores e compartilhamento</h2>
+        <ul class="mb-2">
+            {% for o in t.operadores %}<li><strong>{{ o.nome }}:</strong> {{ o.papel }}</li>{% endfor %}
         </ul>
         <p class="text-muted small mb-0">
-            Não são coletados dados como CPF, telefone ou endereço residencial dos
-            usuários — apenas o necessário para identificação e controle de
-            acesso ao sistema.
+            O servidor fica na nuvem da AWS; se a região escolhida for fora do Brasil, há transferência
+            internacional de dados (LGPD, arts. 33 a 36), que o controlador deve avaliar. Os dados não são
+            vendidos nem usados para outra finalidade.
+        </p>
+    </div>
+</div>
+
+<div class="oris-privacidade-section">
+    <div class="oris-privacidade-icon"><i class="bi bi-person-check" aria-hidden="true"></i></div>
+    <div class="oris-privacidade-section-body">
+        <h2 class="oris-section-label">Seus direitos e como exercê-los</h2>
+        <ul>
+            {% for codigo, direito, como in t.direitos %}<li><strong>{{ direito }}.</strong> {{ como }}</li>{% endfor %}
+        </ul>
+        <p class="mb-0">
+            Os pedidos são respondidos em até {{ t.prazo_resposta_dias }} dias.
+            {% if session.autenticado %}
+            <a href="{{ url_for('lgpd.meus_dados') }}">Abrir Meus dados</a>.
+            {% else %}
+            Entre no sistema e abra <strong>Meus dados</strong> para ver, exportar ou pedir algo.
+            {% endif %}
         </p>
     </div>
 </div>
@@ -68,14 +122,10 @@
     <div class="oris-privacidade-section-body">
         <h2 class="oris-section-label">Quem possui acesso</h2>
         <p class="mb-0">
-            O acesso aos dados é controlado por perfil (RBAC): cada usuário só
-            acessa as áreas e ações permitidas ao seu perfil
-            (<code>ADMINISTRADOR</code>, <code>GESTAO_INFORMACAO</code>,
-            <code>RESPONSAVEL_SAUDE_BUCAL</code> ou <code>GESTOR</code>). A
-            administração de contas de usuário é exclusiva do
-            <code>ADMINISTRADOR</code>. A trilha de auditoria só pode ser
-            consultada por <code>ADMINISTRADOR</code> e
-            <code>GESTAO_INFORMACAO</code>.
+            O acesso é controlado por perfil (RBAC): <code>ADMINISTRADOR</code>, <code>GESTAO_INFORMACAO</code>,
+            <code>RESPONSAVEL_SAUDE_BUCAL</code> e <code>GESTOR</code>. A administração de contas e o tratamento
+            dos pedidos de titulares são exclusivos do <code>ADMINISTRADOR</code>. A trilha de auditoria só é
+            consultada por <code>ADMINISTRADOR</code> e <code>GESTAO_INFORMACAO</code>.
         </p>
     </div>
 </div>
@@ -85,12 +135,13 @@
     <div class="oris-privacidade-section-body">
         <h2 class="oris-section-label">Controles de segurança</h2>
         <ul class="mb-0">
-            <li>Senhas nunca são armazenadas em texto puro — apenas como hash bcrypt;</li>
-            <li>Controle de acesso por perfil verificado sempre no backend;</li>
-            <li>Alterações críticas (criar/editar/mudar situação de Unidades, Serviços e Equipamentos) passam por um fluxo de aprovação, nunca aplicadas unilateralmente;</li>
-            <li>Toda ação relevante gera um registro de auditoria rastreável, que não pode ser editado nem excluído pela aplicação;</li>
-            <li>Proteção contra CSRF em todos os formulários;</li>
-            <li>Upload de planilhas com validação de formato, tamanho e limpeza de arquivos temporários.</li>
+            <li>Senhas guardadas apenas como hash bcrypt;</li>
+            <li>Controle de acesso por perfil verificado sempre no servidor;</li>
+            <li>Alterações em Unidades, Serviços e Equipamentos passam por aprovação;</li>
+            <li>Trilha de auditoria que a aplicação não edita nem apaga, protegida por triggers no banco;</li>
+            <li>Proteção contra CSRF em todos os formulários e HTTPS com HSTS na implantação AWS;</li>
+            <li>Banco de dados em disco criptografado e relatórios no S3 com criptografia;</li>
+            <li>Upload de planilhas com validação de formato, tamanho e limpeza dos arquivos temporários.</li>
         </ul>
     </div>
 </div>
@@ -100,10 +151,9 @@
     <div class="oris-privacidade-section-body">
         <h2 class="oris-section-label">Auditoria e rastreabilidade</h2>
         <p class="mb-0">
-            Login, logout, criação/edição de registros, aprovações, rejeições e
-            a administração de usuários geram registros de auditoria — quem fez,
-            quando, o quê, e (quando aplicável) o valor anterior e o novo valor.
-            Esses registros nunca incluem senhas, hashes ou outras credenciais.
+            Login, logout, criação e edição de registros, aprovações, rejeições, administração de usuários e
+            pedidos de titulares geram registros com quem fez, quando, de onde (IP), o quê e o resultado.
+            Esses registros nunca incluem senhas.
         </p>
     </div>
 </div>
@@ -112,43 +162,22 @@
     <div class="oris-privacidade-icon"><i class="bi bi-archive" aria-hidden="true"></i></div>
     <div class="oris-privacidade-section-body">
         <h2 class="oris-section-label">Retenção de dados</h2>
-        <p>
-            Nesta fase do projeto, o ORIS adota uma política simples e prudente:
-        </p>
-        <ul>
-            <li>Usuários desativados não são excluídos — permanecem no sistema para preservar o histórico e a integridade da auditoria;</li>
-            <li>Registros de auditoria não são apagados pela aplicação;</li>
-            <li>Dados operacionais (unidades, serviços, equipamentos) seguem a necessidade administrativa definida pelo responsável pelo sistema.</li>
+        <ul class="mb-0">
+            <li>A trilha de auditoria é mantida por no mínimo {{ t.retencao_anos }} ano(s) e não é apagada pela aplicação. Depois do prazo, o arquivamento é feito pelo administrador do banco, com backup testado.</li>
+            <li>Contas desativadas não são apagadas, para preservar o histórico. A anonimização, a pedido do titular, remove nome, e-mail e senha da conta e mantém a trilha ligada ao número da conta (LGPD, art. 16, I).</li>
+            <li>Dados operacionais (unidades, serviços, equipamentos) seguem a necessidade administrativa.</li>
         </ul>
-        <p class="text-muted small mb-0">
-            Prazos específicos de retenção e descarte ainda precisam ser
-            definidos pelo órgão responsável pelo sistema —
-            <strong>[definir pelo órgão responsável]</strong>.
-        </p>
     </div>
 </div>
 
 <div class="oris-privacidade-section">
-    <div class="oris-privacidade-icon"><i class="bi bi-envelope" aria-hidden="true"></i></div>
+    <div class="oris-privacidade-icon"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i></div>
     <div class="oris-privacidade-section-body">
-        <h2 class="oris-section-label">Contato / responsável</h2>
-        <p class="text-muted mb-0">
-            <strong>[definir pelo órgão responsável]</strong> — este projeto
-            acadêmico não define, neste momento, um encarregado de dados (DPO),
-            e-mail institucional ou canal oficial de contato.
-        </p>
-    </div>
-</div>
-
-<div class="oris-privacidade-section">
-    <div class="oris-privacidade-icon"><i class="bi bi-hdd-network" aria-hidden="true"></i></div>
-    <div class="oris-privacidade-section-body">
-        <h2 class="oris-section-label">Ambiente de produção</h2>
-        <p class="text-muted small mb-0">
-            Em um ambiente de produção real, o acesso ao ORIS deve ocorrer
-            exclusivamente via HTTPS/TLS, com os cookies de sessão marcados
-            como seguros — ver a documentação de segurança do projeto para mais
-            detalhes técnicos.
+        <h2 class="oris-section-label">Incidentes de segurança</h2>
+        <p class="mb-0">
+            Em caso de incidente que possa causar risco ou dano relevante aos titulares, o controlador avalia o
+            caso e comunica a Autoridade Nacional de Proteção de Dados e os titulares afetados em prazo razoável
+            (LGPD, art. 48). O procedimento está descrito em <code>docs/LGPD.md</code>.
         </p>
     </div>
 </div>

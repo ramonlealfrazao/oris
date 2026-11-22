@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Governança — ORIS{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}">Início</a>
+    <span aria-hidden="true">/</span>
+    <span class="oris-breadcrumb-current">Governança</span>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/governanca.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="oris-page-header">
+    <div>
+        <h1>Governança de TI</h1>
+        <p>Como o ORIS se alinha aos seis princípios da ISO/IEC 38500, com números calculados agora a partir dos dados do sistema.</p>
+    </div>
+</div>
+
+{% include "governanca/_nav.html" %}
+
+{% for p in principios %}
+<section class="oris-panel oris-principio">
+    <h2 class="oris-section-label">{{ loop.index }}. {{ p.nome }}</h2>
+    <p class="text-muted mb-1">{{ p.ideia }}</p>
+    <div class="oris-principio-numeros">
+        {% for rotulo, valor in indicadores[p.chave] %}
+        <div><strong>{{ valor }}</strong><span>{{ rotulo }}</span></div>
+        {% endfor %}
+    </div>
+    <dl class="mb-0">
+        <dt>Como o ORIS apoia</dt><dd>{{ p.como }}</dd>
+        <dt>Evidência</dt><dd>{{ p.evidencia }}</dd>
+        <dt>Lacuna</dt><dd class="mb-0">{{ p.lacuna }}</dd>
+    </dl>
+</section>
+{% endfor %}
+{% endblock %}

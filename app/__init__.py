@@ -64,6 +64,8 @@ def create_app(config_object=None):
     from app.routes.usuarios import usuarios_bp
     from app.routes.relatorios import relatorios_bp
     from app.routes.privacidade import privacidade_bp
+    from app.routes.lgpd import lgpd_bp
+    from app.routes.governanca import governanca_bp
     from app.routes.design_system import design_system_bp
     from app.routes.bd import bd_bp
     from app.routes.api import api_bp
@@ -81,6 +83,8 @@ def create_app(config_object=None):
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(relatorios_bp)
     app.register_blueprint(privacidade_bp)
+    app.register_blueprint(lgpd_bp)
+    app.register_blueprint(governanca_bp)
     app.register_blueprint(design_system_bp)
     app.register_blueprint(bd_bp)
     app.register_blueprint(api_bp)

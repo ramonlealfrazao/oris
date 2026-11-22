@@ -38,6 +38,17 @@ class Config:
     # o cabecalho seria forjavel e o IP da auditoria/rate limit nao valeria nada.
     TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "0"))
 
+    # --- LGPD: identificação do controlador e do encarregado ---
+    LGPD_CONTROLADOR = os.getenv("LGPD_CONTROLADOR", "Secretaria de Saúde do Recife")
+    LGPD_ENCARREGADO_NOME = os.getenv("LGPD_ENCARREGADO_NOME", "")
+    LGPD_ENCARREGADO_EMAIL = os.getenv("LGPD_ENCARREGADO_EMAIL", "")
+    LGPD_BASE_LEGAL = os.getenv(
+        "LGPD_BASE_LEGAL",
+        "Execução de políticas públicas pela administração pública (LGPD, art. 7º, III, e art. 23).",
+    )
+    LGPD_RETENCAO_AUDITORIA_ANOS = int(os.getenv("LGPD_RETENCAO_AUDITORIA_ANOS", "1"))
+    LGPD_PRAZO_RESPOSTA_DIAS = int(os.getenv("LGPD_PRAZO_RESPOSTA_DIAS", "15"))
+
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
 

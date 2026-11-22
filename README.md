@@ -179,9 +179,15 @@ email, perfil, situação) e os registros de auditoria da atividade
 deles - não são coletados CPF, telefone ou endereço residencial sem
 necessidade funcional direta. Usuários desativados e registros de
 auditoria não são excluídos pela aplicação, preservando histórico.
-Prazos específicos de retenção e descarte, assim como a base legal de
-tratamento, dependem do contexto jurídico de quem opera o sistema —
-o ORIS não os define nem os presume.
+O ORIS oferece Meus dados, exportação, pedidos de titulares (art. 18) e
+anonimização de conta; controlador, encarregado, base legal e prazos de
+retenção são definidos pelo órgão responsável nas variáveis `LGPD_*` do
+`.env`. Detalhes em [`docs/LGPD.md`](docs/LGPD.md).
+
+**Governança:** a área `/governanca` traz o alinhamento com a ISO 38500
+(com indicadores calculados na hora), a matriz de riscos, a RACI, o COBIT,
+o plano de auditoria, os dilemas éticos, a responsabilidade na nuvem e o
+plano de mitigação — ver [`docs/GOVERNANCA.md`](docs/GOVERNANCA.md).
 
 **Limitações conhecidas** (dependem do ambiente de produção): HTTPS/
 TLS real depende do servidor/proxy de implantação; o rate limiting
