@@ -488,3 +488,12 @@ def test_fluxo_de_aprovacao_continua_funcionando(client, app):
     }
     resp = client.post("/unidades/nova", data=dados_unidade, follow_redirects=True)
     assert "aguardando aprovação" in resp.get_data(as_text=True)
+
+
+def test_senha_acima_de_72_bytes_e_recusada_no_formulario(app):
+    from app.forms import RedefinirSenhaForm
+
+    with app.test_request_context(method="POST", data={"nova_senha": "á" * 40, "confirmar_senha": "á" * 40}):
+        form = RedefinirSenhaForm(meta={"csrf": False})
+        assert not form.validate()
+        assert any("72" in erro for erro in form.nova_senha.errors)

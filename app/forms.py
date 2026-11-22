@@ -11,6 +11,11 @@ def _descricao_situacao_obrigatoria(form, field):
         raise ValidationError("Informe a descrição para essa situação.")
 
 
+def _senha_ate_72_bytes(form, field):
+    if len((field.data or "").encode("utf-8")) > 72:
+        raise ValidationError("A senha pode ter no máximo 72 caracteres (menos se usar acentos).")
+
+
 class LoginForm(FlaskForm):
     email = StringField(
         "Email",
@@ -217,6 +222,7 @@ class CriarUsuarioForm(FlaskForm):
         validators=[
             DataRequired(message="Informe a senha."),
             Length(min=8, max=255, message="A senha deve ter no mínimo 8 caracteres."),
+            _senha_ate_72_bytes,
         ],
     )
 
@@ -276,6 +282,7 @@ class RedefinirSenhaForm(FlaskForm):
         validators=[
             DataRequired(message="Informe a nova senha."),
             Length(min=8, max=255, message="A senha deve ter no mínimo 8 caracteres."),
+            _senha_ate_72_bytes,
         ],
     )
     confirmar_senha = PasswordField(
