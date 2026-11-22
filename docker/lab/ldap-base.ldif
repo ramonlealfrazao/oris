@@ -1,0 +1,9 @@
+# LDAP do laboratorio visual: so as duas "pastas" (unidades organizacionais).
+# Pessoas e grupos sao criados pela tela do phpLDAPadmin (docs/LAB_VISUAL.md, Fase 3).
+dn: ou=usuarios,dc=oris,dc=local
+objectClass: organizationalUnit
+ou: usuarios
+
+dn: ou=grupos,dc=oris,dc=local
+objectClass: organizationalUnit
+ou: grupos

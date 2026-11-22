@@ -19,6 +19,9 @@
         <p>Gerencie identidades, perfis e acessos da plataforma ORIS.</p>
     </div>
     <div class="oris-users-hero-actions">
+        <a href="{{ url_for('usuarios.diretorio') }}" class="btn btn-outline-light me-2">
+            <i class="bi bi-diagram-3" aria-hidden="true"></i> Diretório LDAP
+        </a>
         <a href="{{ url_for('usuarios.novo') }}" class="btn btn-primary">
             <i class="bi bi-person-plus" aria-hidden="true"></i> Novo usuário
         </a>

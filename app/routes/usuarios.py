@@ -1,11 +1,17 @@
 """Administração de Usuários (Fase 11)."""
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 
 from app.extensions import db
 from app.forms import AcaoAlteracaoForm, CriarUsuarioForm, EditarUsuarioForm, RedefinirSenhaForm
-from app.models import PerfilUsuario, Usuario
-from app.services import mfa_service
+from app.models import OrigemDiretorio, PerfilUsuario, Usuario
+from app.services import ldap_service, mfa_service
+from app.services.diretorio_service import (
+    DiretorioConfigError,
+    carregar_mapa_grupo_perfil,
+    resolver_perfil,
+    sincronizar_usuarios,
+)
 from app.services.auditoria_service import registrar_auditoria
 from app.utils.decorators import roles_required, usuario_atual
 from app.utils.security import gerar_hash_senha
@@ -276,3 +282,74 @@ def redefinir_mfa(usuario_id):
 
     flash(f"MFA de '{usuario.nome}' redefinido. No próximo login ele cadastra o aplicativo de novo.", "success")
     return redirect(url_for("usuarios.editar", usuario_id=usuario.id))
+
+
+# ------------------------------------------------------------------
+# Diretório LDAP pela interface (Requisito 3): consultar e sincronizar
+# com botões, sem terminal. Mesma regra da `flask sincronizar-ldap`.
+# ------------------------------------------------------------------
+def _config_ldap_resumo():
+    cfg = current_app.config
+    uri = cfg.get("LDAP_URI") or ""
+    return {
+        "configurado": bool(uri),
+        "uri": uri,
+        "tls": uri.lower().startswith("ldaps://") or bool(cfg.get("LDAP_USE_STARTTLS")),
+        "valida_certificado": bool(cfg.get("LDAP_CA_CERT_FILE")) or uri.lower().startswith("ldaps://"),
+        "base_usuarios": cfg.get("LDAP_USER_BASE") or "",
+        "base_grupos": cfg.get("LDAP_GROUP_BASE") or "",
+        "conta_servico": cfg.get("LDAP_BIND_DN") or "",
+    }
+
+
+@usuarios_bp.route("/diretorio", methods=["GET", "POST"])
+@roles_required(PERFIL_ADMINISTRADOR)
+def diretorio():
+    form = AcaoAlteracaoForm()
+    resultado, erro, mapa = None, None, {}
+    try:
+        mapa = carregar_mapa_grupo_perfil()
+    except DiretorioConfigError as exc:
+        erro = str(exc)
+
+    if request.method == "POST":
+        if not form.validate_on_submit():
+            abort(400)
+        gravar = request.form.get("modo") == "gravar"
+        try:
+            externos = ldap_service.buscar_usuarios_ldap()
+            resumo = sincronizar_usuarios(
+                externos, OrigemDiretorio.LDAP, desativar_ausentes=True, simular=not gravar
+            )
+            pessoas = []
+            for externo in externos:
+                perfil = resolver_perfil(externo.grupos, mapa)
+                pessoas.append({
+                    "uid": externo.identificador, "nome": externo.nome, "email": externo.email,
+                    "grupos": externo.grupos, "perfil": perfil.value if perfil else None,
+                })
+            resultado = {"gravou": gravar, "resumo": resumo, "pessoas": pessoas}
+            if gravar:
+                registrar_auditoria(
+                    usuario=usuario_atual(),
+                    acao="SINCRONIZAR_LDAP",
+                    tabela="usuarios",
+                    descricao=(
+                        f"Sincronização LDAP pela interface: {len(externos)} lido(s), "
+                        f"{resumo['criados']} criado(s), {resumo['atualizados']} atualizado(s), "
+                        f"{resumo['desativados']} desativado(s)."
+                    ),
+                )
+                db.session.commit()
+                flash("Sincronização concluída: as tabelas locais foram atualizadas.", "success")
+        except DiretorioConfigError as exc:
+            erro = str(exc)
+        except Exception:  # rede/TLS/senha do diretório: mensagem genérica, detalhe no log
+            current_app.logger.exception("Falha ao consultar o LDAP")
+            erro = "Não foi possível consultar o LDAP (servidor fora do ar, certificado ou senha da conta de serviço)."
+
+    contas = Usuario.query.filter_by(origem=OrigemDiretorio.LDAP).order_by(Usuario.nome).all()
+    return render_template(
+        "usuarios/diretorio.html", form=form, config=_config_ldap_resumo(), mapa=mapa,
+        resultado=resultado, erro=erro, contas=contas,
+    )

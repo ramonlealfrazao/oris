@@ -140,3 +140,28 @@ def test_gitignore_protege_segredos_gerados():
     ignorados = (RAIZ / ".gitignore").read_text(encoding="utf-8")
     for item in (".env.aws", "docker/ldap/certs/", "docker/keycloak/generated/"):
         assert item in ignorados
+
+
+def test_laboratorio_visual_protege_consoles_e_nao_tem_segredo_padrao():
+    compose = (RAIZ / "docker-compose.lab.yml").read_text(encoding="utf-8")
+    for var in ("DB_PASSWORD", "DB_ROOT_PASSWORD", "SECRET_KEY", "DATA_ENCRYPTION_KEY", "SENHA_ADMIN", "MEU_IP", "ORIS_DOMAIN"):
+        assert f"${{{var}:?" in compose, f"{var} deve ser obrigatoria (sem valor padrao)"
+    # So o Caddy publica portas: LDAP, Keycloak, phpLDAPadmin, app e banco ficam na rede interna.
+    import re
+
+    servicos = compose.split("\nservices:\n", 1)[1].split("\nvolumes:\n", 1)[0]
+    blocos = re.split(r"\n(?=  [a-z]+:\n)", "\n" + servicos)
+    publicam = [b.strip().split(":")[0] for b in blocos if "\n    ports:" in b]
+    assert publicam == ["caddy"], publicam
+    assert "LDAP_USE_STARTTLS: \"true\"" in compose and "LDAP_CA_CERT_FILE" in compose
+    assert "KC_TRUSTSTORE_PATHS" in compose and "kc_data:/opt/keycloak/data" in compose
+    caddy = (RAIZ / "docker" / "Caddyfile.lab").read_text(encoding="utf-8")
+    assert "not remote_ip {$MEU_IP}" in caddy and "path /admin* /realms/master*" in caddy
+    assert "Strict-Transport-Security" in caddy
+
+
+def test_user_data_do_laboratorio_exige_preencher_e_nao_traz_segredo():
+    script = (RAIZ / "docker" / "lab" / "user-data.sh").read_text(encoding="utf-8")
+    assert 'SENHA_ADMIN="TROQUE_POR_UMA_SENHA_FORTE"' in script  # placeholder, nunca uma senha real
+    assert "*COLE_*|*TROQUE_*" in script  # recusa rodar sem preencher
+    assert "chmod 600 .env.lab" in script and "openssl rand" in script

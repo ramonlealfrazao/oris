@@ -1,0 +1,35 @@
+# Laboratorio visual: tres enderecos com HTTPS automatico (Let's Encrypt).
+#   https://<dominio>       -> ORIS (aberto)
+#   https://kc.<dominio>    -> Keycloak (login aberto; console /admin so para MEU_IP)
+#   https://ldap.<dominio>  -> phpLDAPadmin (so para MEU_IP)
+# MEU_IP vem do .env.lab; para trocar: sudo sh docker/lab/configurar.sh ip NOVO_IP
+(seguranca) {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+}
+
+{$ORIS_DOMAIN} {
+	import seguranca
+	reverse_proxy app:5000
+}
+
+kc.{$ORIS_DOMAIN} {
+	import seguranca
+	@console_de_fora {
+		path /admin* /realms/master*
+		not remote_ip {$MEU_IP}
+	}
+	respond @console_de_fora "Console do Keycloak liberado so para o IP do laboratorio." 403
+	reverse_proxy keycloak:8080
+}
+
+ldap.{$ORIS_DOMAIN} {
+	import seguranca
+	@de_fora not remote_ip {$MEU_IP}
+	respond @de_fora "phpLDAPadmin liberado so para o IP do laboratorio." 403
+	reverse_proxy phpldapadmin:80
+}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Diretório LDAP — ORIS{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{{ url_for('dashboard.index') }}">Início</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ url_for('usuarios.listar') }}">Usuários</a>
+    <span aria-hidden="true">/</span>
+    <span class="oris-breadcrumb-current">Diretório LDAP</span>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/usuarios-premium.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <h1 class="h3"><i class="bi bi-diagram-3" aria-hidden="true"></i> Diretório LDAP</h1>
+    <p class="text-muted mb-0">Lê pessoas e grupos do LDAP e grava nas tabelas locais (<code>usuarios</code>,
+        <code>grupos</code> e <code>usuario_grupos</code>). O grupo vira o perfil; sem grupo mapeado, a pessoa não entra.</p>
+</div>
+
+{% if erro %}<div class="alert alert-danger" role="alert">{{ erro }}</div>{% endif %}
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="oris-users-form-section h-100">
+            <h2 class="oris-users-form-section-title"><i class="bi bi-plug" aria-hidden="true"></i> Conexão</h2>
+            {% if config.configurado %}
+            <ul class="list-unstyled small mb-0">
+                <li><b>Servidor:</b> <code>{{ config.uri }}</code></li>
+                <li><b>Criptografia (TLS):</b>
+                    {% if config.tls %}<span class="badge text-bg-success">ligada</span>{% else %}<span class="badge text-bg-danger">desligada</span>{% endif %}
+                    {% if config.valida_certificado %}<span class="badge text-bg-success">certificado validado</span>{% endif %}</li>
+                <li><b>Conta de serviço:</b> <code>{{ config.conta_servico or "—" }}</code></li>
+                <li><b>Pessoas em:</b> <code>{{ config.base_usuarios or "—" }}</code></li>
+                <li><b>Grupos em:</b> <code>{{ config.base_grupos or "—" }}</code></li>
+            </ul>
+            {% else %}
+            <p class="small mb-0">LDAP não configurado neste servidor (variável <code>LDAP_URI</code>).</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="oris-users-form-section h-100">
+            <h2 class="oris-users-form-section-title"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Grupo do LDAP → perfil do ORIS</h2>
+            {% if mapa %}
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Grupo</th><th>Perfil</th></tr></thead>
+                <tbody>{% for grupo, perfil in mapa.items() %}<tr><td><code>{{ grupo }}</code></td><td>{{ perfil.value }}</td></tr>{% endfor %}</tbody>
+            </table>
+            {% else %}<p class="small mb-0">Nenhum mapeamento configurado.</p>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="modo" value="simular">
+        <button type="submit" class="btn btn-outline-primary" {% if not config.configurado %}disabled{% endif %}>
+            <i class="bi bi-eye" aria-hidden="true"></i> Simular (não grava nada)
+        </button>
+    </form>
+    <form method="POST" onsubmit="return confirm('Gravar no ORIS as pessoas e os grupos lidos do LDAP? Quem saiu do LDAP será desativado.');">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="modo" value="gravar">
+        <button type="submit" class="btn btn-primary" {% if not config.configurado %}disabled{% endif %}>
+            <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Sincronizar agora
+        </button>
+    </form>
+</div>
+
+{% if resultado %}
+<div class="oris-users-form-section mb-4">
+    <h2 class="oris-users-form-section-title">
+        {% if resultado.gravou %}<i class="bi bi-check-circle" aria-hidden="true"></i> Resultado da sincronização
+        {% else %}<i class="bi bi-eye" aria-hidden="true"></i> Simulação: nada foi gravado{% endif %}
+    </h2>
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <span class="badge text-bg-light fs-6">{{ resultado.pessoas|length }} lida(s) no LDAP</span>
+        <span class="badge text-bg-success fs-6">{{ resultado.resumo.criados }} criada(s)</span>
+        <span class="badge text-bg-primary fs-6">{{ resultado.resumo.atualizados }} atualizada(s)</span>
+        <span class="badge text-bg-warning fs-6">{{ resultado.resumo.desativados }} desativada(s)</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>uid</th><th>Nome</th><th>E-mail</th><th>Grupos no LDAP</th><th>Perfil no ORIS</th></tr></thead>
+        <tbody>
+        {% for p in resultado.pessoas %}
+            <tr><td><code>{{ p.uid }}</code></td><td>{{ p.nome }}</td><td>{{ p.email }}</td>
+                <td>{{ p.grupos|join(", ") or "—" }}</td>
+                <td>{% if p.perfil %}{{ p.perfil }}{% else %}<span class="badge text-bg-danger">sem grupo mapeado: não entra</span>{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% for motivo in resultado.resumo.ignorados %}<div class="small text-muted">Ignorado: {{ motivo }}</div>{% endfor %}
+    {% for motivo in resultado.resumo.protegidos %}<div class="small text-warning">Protegido: {{ motivo }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="oris-users-form-section">
+    <h2 class="oris-users-form-section-title"><i class="bi bi-people" aria-hidden="true"></i> Contas que vieram do LDAP ({{ contas|length }})</h2>
+    {% if contas %}
+    <table class="table table-sm mb-0">
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Grupos</th><th>Situação</th></tr></thead>
+        <tbody>{% for u in contas %}
+            <tr><td>{{ u.nome }}</td><td>{{ u.email }}</td><td>{{ u.perfil.value }}</td>
+                <td>{{ u.grupos|map(attribute="nome")|join(", ") or "—" }}</td>
+                <td>{% if u.ativo %}<span class="badge text-bg-success">ativa</span>{% else %}<span class="badge text-bg-secondary">desativada</span>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+    </table>
+    {% else %}<p class="small mb-0">Nenhuma ainda. Use "Sincronizar agora".</p>{% endif %}
+</div>
+{% endblock %}

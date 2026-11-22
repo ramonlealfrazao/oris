@@ -210,6 +210,9 @@ alguns filtros de listagem. Detalhes em `docs/SEGURANCA.md`.
 ## Integração com diretórios e nuvem (Fase 14)
 
 - **Arquitetura, papéis e recursos:** `docs/ARQUITETURA.md`.
+- **Laboratório visual na AWS (LDAP + Keycloak + S3 pela interface gráfica):**
+  `docs/LAB_VISUAL.md`. Também há a tela **Usuários → Diretório LDAP**
+  (só Administrador), com os botões **Simular** e **Sincronizar agora**.
 - **LDAP:** `flask sincronizar-ldap [--simular] [--manter-ausentes]` popula as
   tabelas `usuarios` e `grupos` (`app/services/ldap_service.py`,
   `app/services/diretorio_service.py`).

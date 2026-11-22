@@ -1,0 +1,158 @@
+# ORIS - LABORATORIO VISUAL de LDAP + OIDC (Keycloak) + S3 na AWS.
+# Sobe tudo com interface grafica: ORIS, OpenLDAP + phpLDAPadmin (tela web do LDAP) e Keycloak
+# (console web). Pensado para aprender e demonstrar; o passo a passo esta em docs/LAB_VISUAL.md.
+# Normalmente quem sobe isto e o roteiro docker/lab/user-data.sh (campo "User data" da EC2):
+#   sudo docker compose -f docker-compose.lab.yml --env-file .env.lab up -d --build
+#
+# Diferencas em relacao ao docker-compose.aws.yml + idp:
+# - LDAP comeca VAZIO (so as pastas usuarios e grupos): pessoas e grupos sao criados na tela;
+# - Keycloak comeca SEM realm: realm, client, federacao e mapeadores sao feitos no console;
+# - consoles de administracao (Keycloak e phpLDAPadmin) so abrem para o IP do laboratorio (MEU_IP).
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: oris_db
+      MYSQL_USER: oris_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?defina DB_ROOT_PASSWORD}
+    command:
+      - --log-bin-trust-function-creators=1
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - oris_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      ldap:
+        condition: service_started
+    volumes:
+      - ./docker/ldap/certs/ca.crt:/certs/ca.crt:ro
+    environment:
+      FLASK_ENV: production
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: oris_db
+      DB_USER: oris_user
+      DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?defina DATA_ENCRYPTION_KEY}
+      SESSION_COOKIE_SECURE: "true"
+      TRUSTED_PROXY_COUNT: "1"
+      ORIS_SEED: ${ORIS_SEED:-true}
+      ORIS_DEMO_SENHA: ${SENHA_ADMIN:?defina SENHA_ADMIN}
+      # Requisito 4 - S3 (o bucket e criado no console da AWS; ver docker/lab/configurar.sh)
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      # Requisito 3 - LDAP (STARTTLS validando a CA propria do laboratorio)
+      LDAP_URI: ldap://ldap.oris.local:389
+      LDAP_USE_STARTTLS: "true"
+      LDAP_CA_CERT_FILE: /certs/ca.crt
+      LDAP_BIND_DN: cn=admin,dc=oris,dc=local
+      LDAP_BIND_PASSWORD: ${SENHA_ADMIN:?defina SENHA_ADMIN}
+      LDAP_USER_BASE: ou=usuarios,dc=oris,dc=local
+      LDAP_GROUP_BASE: ou=grupos,dc=oris,dc=local
+      DIRETORIO_MAPA_GRUPO_PERFIL: '{"oris-admin":"ADMINISTRADOR","oris-gestao":"GESTAO_INFORMACAO","oris-saude":"RESPONSAVEL_SAUDE_BUCAL","oris-gestor":"GESTOR"}'
+      # Requisito 3 - OIDC (liga depois de criar o client no Keycloak; ver docker/lab/configurar.sh)
+      OIDC_ENABLED: ${OIDC_ENABLED:-false}
+      OIDC_ISSUER: https://kc.${ORIS_DOMAIN:?defina ORIS_DOMAIN}/realms/oris
+      OIDC_CLIENT_ID: oris
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_CLAIM_GROUPS: groups
+      OIDC_CLAIM_LDAP_UID: ldap_uid
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    restart: unless-stopped
+    hostname: ldap.oris.local
+    command: ["--copy-service"]
+    environment:
+      LDAP_ORGANISATION: ORIS
+      LDAP_DOMAIN: oris.local
+      LDAP_ADMIN_PASSWORD: ${SENHA_ADMIN:?defina SENHA_ADMIN}
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: ldap.crt
+      LDAP_TLS_KEY_FILENAME: ldap.key
+      LDAP_TLS_CA_CRT_FILENAME: ca.crt
+      LDAP_TLS_VERIFY_CLIENT: never
+    volumes:
+      - ./docker/lab/ldap-base.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/base.ldif:ro
+      - ./docker/ldap/certs:/container/service/slapd/assets/certs
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    networks:
+      default:
+        aliases:
+          - ldap.oris.local
+    # Sem "ports": so a rede interna do Docker alcanca o LDAP.
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    restart: unless-stopped
+    depends_on:
+      - ldap
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: ldap.oris.local
+      PHPLDAPADMIN_HTTPS: "false"          # o HTTPS e feito pelo Caddy
+      PHPLDAPADMIN_LDAP_CLIENT_TLS: "false"  # conversa so dentro da rede interna do Docker
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    restart: unless-stopped
+    command: ["start"]
+    depends_on:
+      - ldap
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${SENHA_ADMIN:?defina SENHA_ADMIN}
+      KC_HOSTNAME: https://kc.${ORIS_DOMAIN:?defina ORIS_DOMAIN}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      # Confia na CA do laboratorio para a federacao com o LDAP via STARTTLS
+      KC_TRUSTSTORE_PATHS: /opt/keycloak/conf/truststores/ca.crt
+      JAVA_OPTS_KC_HEAP: "-Xms256m -Xmx640m"
+    volumes:
+      - ./docker/ldap/certs/ca.crt:/opt/keycloak/conf/truststores/ca.crt:ro
+      - kc_data:/opt/keycloak/data   # o que for feito no console sobrevive a reinicios
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+      - keycloak
+      - phpldapadmin
+    environment:
+      ORIS_DOMAIN: ${ORIS_DOMAIN:?defina ORIS_DOMAIN}
+      MEU_IP: ${MEU_IP:?defina MEU_IP}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/Caddyfile.lab:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      default:
+        aliases:
+          - kc.${ORIS_DOMAIN}
+
+volumes:
+  oris_db_data:
+  ldap_data:
+  ldap_config:
+  kc_data:
+  caddy_data:
+  caddy_config:
