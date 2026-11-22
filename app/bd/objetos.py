@@ -137,6 +137,32 @@ def codigo_fonte(nome):
     return ""
 
 
+# Com o log binário ligado, criar FUNÇÃO ou TRIGGER exige log_bin_trust_function_creators=1
+# ou o privilégio SUPER (erro 1419). Procedimentos e views não dependem disso.
+SQL_PODE_CRIAR_FUNCOES_E_TRIGGERS = (
+    "SELECT @@global.log_bin = 0 OR @@global.log_bin_trust_function_creators = 1 "
+    "OR EXISTS (SELECT 1 FROM information_schema.USER_PRIVILEGES "
+    "WHERE PRIVILEGE_TYPE = 'SUPER' AND GRANTEE = CONCAT(\"'\", "
+    "SUBSTRING_INDEX(CURRENT_USER(), '@', 1), \"'@'\", SUBSTRING_INDEX(CURRENT_USER(), '@', -1), \"'\"))"
+)
+
+
+def _e_funcao_ou_trigger(sql):
+    """True para DROP/CREATE de FUNCTION ou TRIGGER (os que o erro 1419 barra)."""
+    primeira = " ".join(sql.split()[:3]).upper()
+    return any(f"{verbo} {tipo}" in primeira for verbo in ("DROP", "CREATE") for tipo in ("FUNCTION", "TRIGGER"))
+
+
+def _pode_criar_funcoes_e_triggers(cur):
+    try:
+        cur.execute(SQL_PODE_CRIAR_FUNCOES_E_TRIGGERS)
+        linha = cur.fetchone()
+        valor = linha[0] if not isinstance(linha, dict) else next(iter(linha.values()))
+        return bool(valor)
+    except Exception:
+        return True  # na dúvida tenta; o tratamento do 1419 abaixo continua valendo
+
+
 def aplicar_objetos(conexao=None):
     """Cria/recria os objetos, um comando por vez. Devolve (aplicados, ignorados).
 
@@ -149,7 +175,15 @@ def aplicar_objetos(conexao=None):
     aplicados, ignorados = 0, []
     try:
         with conexao.cursor() as cur:
+            pode = _pode_criar_funcoes_e_triggers(cur)
             for sql in ler_comandos():  # DDL vindo do arquivo versionado do repositório
+                if not pode and _e_funcao_ou_trigger(sql):
+                    # NÃO apaga o que existe se não vai conseguir recriar: antes, o
+                    # DROP passava e o CREATE falhava, e o banco ficava sem os triggers.
+                    primeira = sql.splitlines()[0]
+                    if not primeira.upper().startswith("DROP"):
+                        ignorados.append(primeira.split("(")[0].strip())
+                    continue
                 try:
                     cur.execute(sql)
                     aplicados += 1
