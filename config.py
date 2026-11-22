@@ -93,6 +93,9 @@ class Config:
     # vira conta OIDC. Ligue apenas se o provedor for confiável e o atributo não puder
     # ser editado pelo próprio usuário.
     OIDC_CLAIM_LDAP_UID = os.getenv("OIDC_CLAIM_LDAP_UID", "")
+    # "login" = sempre pedir a senha no provedor ao clicar em SSO (padrão, evita entrar com a
+    # sessão de outra pessoa no mesmo navegador). Vazio = reaproveitar a sessão do provedor.
+    OIDC_PROMPT = os.getenv("OIDC_PROMPT", "login")
     OIDC_ALLOW_INSECURE = os.getenv("OIDC_ALLOW_INSECURE", "false").lower() == "true"
 
     # --- Exportação de relatórios para nuvem: Amazon S3 (Requisito 4) ---

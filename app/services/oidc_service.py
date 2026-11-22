@@ -110,6 +110,12 @@ def iniciar_autorizacao(redirect_uri, config=None):
         "code_challenge": desafio,
         "code_challenge_method": "S256",
     }
+    # prompt=login obriga o provedor a pedir a senha de novo, mesmo havendo sessão SSO
+    # aberta no navegador (sair do ORIS não encerra a sessão do Keycloak). Vazio = deixa
+    # o provedor reaproveitar a sessão.
+    prompt = str(config.get("OIDC_PROMPT", "") or "").strip()
+    if prompt:
+        parametros["prompt"] = prompt
     url = f"{metadados['authorization_endpoint']}?{urllib.parse.urlencode(parametros)}"
     return url, estado
 

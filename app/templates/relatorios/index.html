@@ -16,6 +16,26 @@
     </div>
 </div>
 
+{% if exportacao %}
+<div class="alert alert-success" role="status">
+    <h2 class="h6 mb-2"><i class="bi bi-cloud-check" aria-hidden="true"></i> Relatório de {{ exportacao.titulo }} enviado ao Amazon S3</h2>
+    <dl class="row mb-2 small">
+        <dt class="col-sm-3">Arquivo</dt>
+        <dd class="col-sm-9"><code>{{ exportacao.arquivo }}</code></dd>
+        <dt class="col-sm-3">Bucket</dt>
+        <dd class="col-sm-9"><code>{{ exportacao.bucket }}</code> (privado, criptografado)</dd>
+        <dt class="col-sm-3">SHA-256</dt>
+        <dd class="col-sm-9"><code class="text-break">{{ exportacao.sha256 }}</code></dd>
+    </dl>
+    {% if exportacao.link %}
+    <a href="{{ exportacao.link }}" class="btn btn-success btn-sm" rel="noopener">
+        <i class="bi bi-download" aria-hidden="true"></i> Baixar arquivo do S3
+    </a>
+    <span class="small ms-2">O link é temporário e expira em {{ exportacao.minutos }} min.</span>
+    {% endif %}
+</div>
+{% endif %}
+
 {% if pode_exportar and not s3_ativo %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle" aria-hidden="true"></i>
@@ -50,4 +70,35 @@
         </tbody>
     </table>
 </div>
+{% if pode_exportar %}
+<div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+    <h2 class="h5 mb-0">Histórico de exportações para o S3</h2>
+    <a href="{{ url_for('relatorios.baixar_historico') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Baixar planilha (CSV)
+    </a>
+</div>
+{% if historico %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr><th>Data/hora (UTC)</th><th>Relatório</th><th>Exportado por</th><th>Arquivo no S3</th><th>SHA-256</th></tr>
+        </thead>
+        <tbody>
+            {% for h in historico %}
+            <tr>
+                <td>{{ h.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                <td>{{ titulos.get(h.relatorio, h.relatorio) }}</td>
+                <td>{{ h.usuario or '—' }}</td>
+                <td><code>{{ h.arquivo }}</code></td>
+                <td><code title="{{ h.sha256 }}">{{ h.sha256[:12] }}…</code></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p class="small text-muted">Mostrando as 20 mais recentes; a planilha traz todas. Fonte: trilha de auditoria (somente leitura).</p>
+{% else %}
+<p class="text-muted">Nenhuma exportação feita ainda.</p>
+{% endif %}
+{% endif %}
 {% endblock %}
