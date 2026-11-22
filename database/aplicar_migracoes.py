@@ -5,7 +5,8 @@ Aplica, de forma idempotente, as migracoes pendentes do banco:
 - 0002 (database/migrations/0002_...sql): Fase 14;
 - 0003 (database/migrations/0003_...sql): descricoes de situacao e motivo de rejeicao;
 - 0004 (inline, abaixo): auditorias ganha origem_ip, resultado e identificador_tentado,
-  e usuario_id passa a aceitar NULL (tentativa de login sem usuario).
+  e usuario_id passa a aceitar NULL (tentativa de login sem usuario);
+- 0005 (inline, abaixo): usuarios ganha as colunas do MFA (TOTP) do login local.
 
 Fase 14:
 - Cria as tabelas que faltam (grupos, usuario_grupos) com db.create_all().
@@ -99,6 +100,17 @@ def main():
             comandos.append("ALTER TABLE auditorias ADD COLUMN identificador_tentado VARCHAR(255) NULL")
         if not cols_aud["usuario_id"]["nullable"]:
             comandos.append("ALTER TABLE auditorias MODIFY COLUMN usuario_id INT NULL")
+
+        # --- Migracao 0005 (MFA/TOTP do login local) ---
+        cols_usu = {c["name"] for c in insp.get_columns("usuarios")}
+        for coluna, ddl in (
+            ("mfa_ativo", "BOOLEAN NOT NULL DEFAULT FALSE"),
+            ("mfa_segredo", "TEXT NULL"),
+            ("mfa_ultimo_passo", "BIGINT NULL"),
+            ("mfa_codigos_recuperacao", "TEXT NULL"),
+        ):
+            if coluna not in cols_usu:
+                comandos.append(f"ALTER TABLE usuarios ADD COLUMN {coluna} {ddl}")
 
         for comando in comandos:
             db.session.execute(text(comando))

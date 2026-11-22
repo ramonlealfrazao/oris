@@ -273,3 +273,30 @@ def test_retencao_configuravel_aparece_na_pagina(app, client):
     app.config["LGPD_RETENCAO_AUDITORIA_ANOS"] = 5
     html = client.get("/privacidade").get_data(as_text=True)
     assert "5 ano(s)" in html
+
+
+def test_anonimizacao_apaga_tambem_o_mfa(client, app):
+    email = EMAILS[PerfilUsuario.GESTOR]
+    sid = criar_solicitacao(app, email, "ELIMINACAO")
+    with app.app_context():
+        u = usuario(email)
+        u.mfa_ativo, u.mfa_segredo = True, "oris-fernet-v1:segredo-cifrado"
+        u.mfa_ultimo_passo, u.mfa_codigos_recuperacao = 123, '["hash"]'
+        db.session.commit()
+        uid = u.id
+    entrar(client, EMAILS[PerfilUsuario.ADMINISTRADOR])
+    assert client.post(f"/lgpd/solicitacoes/{sid}/anonimizar").status_code == 302
+    with app.app_context():
+        u = db.session.get(Usuario, uid)
+        assert u.mfa_ativo is False and u.mfa_segredo is None
+        assert u.mfa_ultimo_passo is None and u.mfa_codigos_recuperacao is None
+
+
+def test_meus_dados_informa_mfa_sem_expor_o_segredo(app):
+    with app.app_context():
+        u = usuario(EMAILS[PerfilUsuario.GESTOR])
+        u.mfa_ativo, u.mfa_segredo = True, "oris-fernet-v1:segredo-cifrado"
+        db.session.commit()
+        dados = lgpd_service.dados_do_titular(u)
+    assert dados["cadastro"]["mfa_ativo"] is True
+    assert "segredo-cifrado" not in json.dumps(dados)

@@ -13,7 +13,7 @@ Detalhe de cada achado: `docs/SEGURANCA.md` (SEC-016 a SEC-022).
 | Integridade com hash (SHA-256) | **Atende em parte** (verificação ativa só no upload ao S3; na importação o hash é só evidência) | `app/utils/integridade.py`, `tests/test_integridade_sha256.py` |
 | Criptografia e acesso aos arquivos exportados (S3) | **Atende e validado em S3 real** (10/11/2026): SSE-S3 AES256, bucket privado, acesso direto = `AccessDenied`, só por URL pré-assinada que expira em 15 min; credencial pela função IAM da instância, sem chave em arquivo | `app/services/armazenamento_service.py`, bucket `oris-relatorios-iago-2026` |
 | Senhas, CSRF, RBAC, rate limit | **Atende** (já existente) | `docs/SEGURANCA.md` |
-| MFA | **Não atende** | SEC-019, pendente (SR2) |
+| MFA | **Atende** no login local (TOTP obrigatório para todos os perfis, testes automatizados); no SSO, OTP exigido pelo realm do Keycloak (**falta validar no Keycloak real**) | SEC-019, `app/services/mfa_service.py`, `tests/test_mfa_totp.py` |
 | HTTPS/HSTS/redirecionamento | **Atende na AWS** (Caddy + Let's Encrypt; validado no servidor real) | SEC-020, `docs/AWS_DEPLOY.md` |
 | Retenção de 1 ano | **Política documentada** (a aplicação nunca apaga; expurgo é do DBA) | `docs/SEGURANCA.md` |
 | Criptografia em repouso do MySQL | **Atende na AWS** (disco EBS criptografado, confirmado no console); fora da aplicação | SEC-022 |

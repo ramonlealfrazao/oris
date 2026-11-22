@@ -110,7 +110,7 @@
                         <span class="badge bg-success">{{ registro.acao }}</span>
                     {% elif registro.acao in ("REJEITAR_ALTERACAO", "DESATIVAR_USUARIO") %}
                         <span class="badge bg-danger">{{ registro.acao }}</span>
-                    {% elif registro.acao in ("LOGIN", "LOGOUT", "LOGIN_FALHA", "LOGIN_BLOQUEADO") %}
+                    {% elif registro.acao in ("LOGIN", "LOGOUT", "LOGIN_FALHA", "LOGIN_BLOQUEADO", "LOGIN_PRIMEIRO_FATOR", "MFA_FALHA", "MFA_BLOQUEADO", "MFA_ATIVADO", "MFA_REDEFINIDO") %}
                         <span class="badge bg-secondary">{{ registro.acao }}</span>
                     {% else %}
                         <span class="badge bg-dark">{{ registro.acao }}</span>

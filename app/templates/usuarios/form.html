@@ -113,4 +113,26 @@
     </form>
 </div>
 {% endif %}
+
+{% if usuario and form_mfa and usuario.origem.value == 'LOCAL' %}
+<div class="oris-users-form-section mt-4">
+    <h2 class="oris-users-form-section-title"><i class="bi bi-shield-lock" aria-hidden="true"></i> Verificação em dois fatores (MFA)</h2>
+    <p class="text-muted small">
+        Situação:
+        {% if usuario.mfa_ativo %}<span class="badge text-bg-success">ativo</span>
+        {% else %}<span class="badge text-bg-secondary">não cadastrado</span>{% endif %}
+        — o MFA é obrigatório; quem ainda não cadastrou é levado ao cadastro no próximo login.
+        Redefina apenas se a pessoa perdeu o celular e os códigos de recuperação.
+    </p>
+    {% if usuario.mfa_ativo or usuario.mfa_segredo %}
+    <form method="POST" action="{{ url_for('usuarios.redefinir_mfa', usuario_id=usuario.id) }}"
+          onsubmit="return confirm('Redefinir o MFA deste usuário? Ele precisará cadastrar o aplicativo de novo.');">
+        {{ form_mfa.hidden_tag() }}
+        <button type="submit" class="btn btn-outline-danger">
+            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Redefinir MFA
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

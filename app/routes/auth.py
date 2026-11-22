@@ -1,11 +1,13 @@
 """Rotas de autenticação"""
 
 import secrets
+import time
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 
 from app.extensions import db
-from app.forms import LoginForm
+from app.forms import LoginForm, MfaCodigoForm
+from app.services import mfa_service
 from app.models import OrigemDiretorio, Usuario
 from app.services.auditoria_service import registrar_auditoria
 from app.services.diretorio_service import DiretorioConfigError, UsuarioExterno, provisionar_usuario_externo
@@ -62,12 +64,20 @@ def login():
             if rate_limit_ativo:
                 limpar_tentativas(ip, email)
 
-            session.clear()
-            session["usuario_id"] = usuario.id
-            session["autenticado"] = True
-            session.permanent = True
+            if mfa_service.mfa_obrigatorio():
+                # Senha correta NÃO abre a sessão: só libera a segunda etapa (MFA),
+                # por poucos minutos. A sessão nasce em _abrir_sessao_local().
+                session.clear()
+                session[CHAVE_MFA_PENDENTE] = {"usuario_id": usuario.id, "desde": time.time()}
+                registrar_auditoria(
+                    usuario=usuario, acao="LOGIN_PRIMEIRO_FATOR",
+                    descricao="Primeiro fator correto; aguardando o segundo fator (MFA).",
+                )
+                db.session.commit()
+                destino = "auth.login_mfa" if usuario.mfa_ativo else "auth.login_mfa_cadastrar"
+                return redirect(url_for(destino))
 
-            registrar_auditoria(usuario=usuario, acao="LOGIN")
+            _abrir_sessao_local(usuario, "Login local (MFA desligado pela configuração).")
             db.session.commit()
 
             return redirect(url_for("main.index"))
@@ -93,6 +103,146 @@ def login():
         flash(MENSAGEM_LOGIN_INVALIDO, "danger")
 
     return render_template("login.html", form=form)
+
+
+# --------------------------------------------------------------------------
+# MFA (TOTP) - segunda etapa do login local
+# --------------------------------------------------------------------------
+CHAVE_MFA_PENDENTE = "mfa_pendente"
+MFA_VALIDADE_SEGUNDOS = 5 * 60
+MENSAGEM_MFA_EXPIRADO = "Sua etapa de verificação expirou. Entre novamente com e-mail e senha."
+MENSAGEM_MFA_INVALIDO = "Código inválido ou já utilizado."
+MENSAGEM_MFA_BLOQUEADO = "Muitas tentativas de código. Aguarde alguns minutos e entre novamente."
+
+
+def _abrir_sessao_local(usuario, descricao):
+    session.clear()
+    session["usuario_id"] = usuario.id
+    session["autenticado"] = True
+    session.permanent = True
+    registrar_auditoria(usuario=usuario, acao="LOGIN", descricao=descricao)
+
+
+def _usuario_mfa_pendente():
+    """Usuário que já acertou a senha e está na segunda etapa, ou None (expirou/inválido)."""
+    pendente = session.get(CHAVE_MFA_PENDENTE)
+    if not isinstance(pendente, dict):
+        return None
+    if time.time() - float(pendente.get("desde", 0)) > MFA_VALIDADE_SEGUNDOS:
+        session.pop(CHAVE_MFA_PENDENTE, None)
+        return None
+    usuario = db.session.get(Usuario, pendente.get("usuario_id"))
+    if usuario is None or not usuario.ativo or usuario.origem != OrigemDiretorio.LOCAL:
+        session.pop(CHAVE_MFA_PENDENTE, None)
+        return None
+    return usuario
+
+
+def _chave_rate_limit_mfa(usuario):
+    # Por usuário (e não por IP): trocar de IP não dá novas tentativas de adivinhar o código.
+    return ("mfa", f"usuario:{usuario.id}")
+
+
+def _mfa_bloqueado(usuario):
+    if not current_app.config.get("RATE_LIMIT_LOGIN_ENABLED", True):
+        return False
+    if not bloqueado(*_chave_rate_limit_mfa(usuario)):
+        return False
+    registrar_auditoria(
+        usuario=usuario, acao="MFA_BLOQUEADO", resultado="FALHA",
+        descricao="Segunda etapa bloqueada por excesso de códigos errados.",
+    )
+    session.pop(CHAVE_MFA_PENDENTE, None)
+    db.session.commit()
+    flash(MENSAGEM_MFA_BLOQUEADO, "danger")
+    return True
+
+
+def _registrar_falha_mfa(usuario, etapa):
+    if current_app.config.get("RATE_LIMIT_LOGIN_ENABLED", True):
+        registrar_tentativa_falha(*_chave_rate_limit_mfa(usuario))
+    registrar_auditoria(
+        usuario=usuario, acao="MFA_FALHA", resultado="FALHA",
+        descricao=f"Código MFA inválido ({etapa}).",
+    )
+    db.session.commit()
+    flash(MENSAGEM_MFA_INVALIDO, "danger")
+
+
+@auth_bp.route("/login/mfa", methods=["GET", "POST"])
+def login_mfa():
+    usuario = _usuario_mfa_pendente()
+    if usuario is None:
+        flash(MENSAGEM_MFA_EXPIRADO, "warning")
+        return redirect(url_for("auth.login"))
+    if not usuario.mfa_ativo:
+        return redirect(url_for("auth.login_mfa_cadastrar"))
+
+    form = MfaCodigoForm()
+    if form.validate_on_submit():
+        if _mfa_bloqueado(usuario):
+            return redirect(url_for("auth.login"))
+        codigo = form.codigo.data
+        if mfa_service.parece_codigo_totp(codigo):
+            valido, metodo = mfa_service.verificar_totp(usuario, codigo), "aplicativo autenticador"
+        else:
+            valido, metodo = mfa_service.usar_codigo_recuperacao(usuario, codigo), "código de recuperação"
+        if valido:
+            if current_app.config.get("RATE_LIMIT_LOGIN_ENABLED", True):
+                limpar_tentativas(*_chave_rate_limit_mfa(usuario))
+            restantes = mfa_service.codigos_restantes(usuario)
+            descricao = f"Login local + MFA ({metodo})."
+            if metodo == "código de recuperação":
+                descricao += f" Restam {restantes} código(s) de recuperação."
+            _abrir_sessao_local(usuario, descricao)
+            db.session.commit()
+            if metodo == "código de recuperação" and restantes <= 2:
+                flash(
+                    f"Você usou um código de recuperação e restam {restantes}. "
+                    "Peça a um administrador para redefinir o seu MFA.",
+                    "warning",
+                )
+            return redirect(url_for("main.index"))
+        _registrar_falha_mfa(usuario, "login")
+
+    return render_template("login_mfa.html", form=form, usuario=usuario)
+
+
+@auth_bp.route("/login/mfa/cadastrar", methods=["GET", "POST"])
+def login_mfa_cadastrar():
+    usuario = _usuario_mfa_pendente()
+    if usuario is None:
+        flash(MENSAGEM_MFA_EXPIRADO, "warning")
+        return redirect(url_for("auth.login"))
+    if usuario.mfa_ativo:
+        return redirect(url_for("auth.login_mfa"))
+
+    segredo = mfa_service.preparar_cadastro(usuario)
+    db.session.commit()
+
+    form = MfaCodigoForm()
+    if form.validate_on_submit():
+        if _mfa_bloqueado(usuario):
+            return redirect(url_for("auth.login"))
+        if mfa_service.verificar_totp(usuario, form.codigo.data):
+            codigos = mfa_service.ativar(usuario)
+            registrar_auditoria(
+                usuario=usuario, acao="MFA_ATIVADO", tabela="usuarios", registro_id=usuario.id,
+                descricao="Autenticação em dois fatores (TOTP) cadastrada pelo próprio usuário.",
+            )
+            _abrir_sessao_local(usuario, "Login local + MFA (cadastro do aplicativo autenticador).")
+            db.session.commit()
+            return render_template("login_mfa_codigos.html", codigos=codigos)
+        _registrar_falha_mfa(usuario, "cadastro")
+
+    uri = mfa_service.uri_provisionamento(usuario, segredo)
+    return render_template(
+        "login_mfa_cadastrar.html",
+        form=form,
+        usuario=usuario,
+        qr_svg=mfa_service.qr_code_svg(uri),
+        segredo_formatado=mfa_service.formatar_segredo(segredo),
+    )
 
 
 MENSAGEM_SSO_NEGADO = "Não foi possível entrar com o login institucional. Procure um administrador."

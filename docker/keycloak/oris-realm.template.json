@@ -39,6 +39,9 @@
           "value": "@@ORIS_DEMO_SENHA@@",
           "temporary": false
         }
+      ],
+      "requiredActions": [
+        "CONFIGURE_TOTP"
       ]
     },
     {
@@ -57,6 +60,9 @@
           "value": "@@ORIS_DEMO_SENHA@@",
           "temporary": false
         }
+      ],
+      "requiredActions": [
+        "CONFIGURE_TOTP"
       ]
     },
     {
@@ -75,6 +81,9 @@
           "value": "@@ORIS_DEMO_SENHA@@",
           "temporary": false
         }
+      ],
+      "requiredActions": [
+        "CONFIGURE_TOTP"
       ]
     },
     {
@@ -93,6 +102,9 @@
           "value": "@@ORIS_DEMO_SENHA@@",
           "temporary": false
         }
+      ],
+      "requiredActions": [
+        "CONFIGURE_TOTP"
       ]
     },
     {
@@ -109,6 +121,9 @@
           "value": "@@ORIS_DEMO_SENHA@@",
           "temporary": false
         }
+      ],
+      "requiredActions": [
+        "CONFIGURE_TOTP"
       ]
     }
   ],
@@ -413,5 +428,10 @@
         }
       }
     ]
-  }
+  },
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "otpPolicyLookAheadWindow": 1
 }

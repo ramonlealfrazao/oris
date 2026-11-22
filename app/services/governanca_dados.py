@@ -56,7 +56,7 @@ ESCALA_RISCO = "Probabilidade e impacto de 1 a 5. Nível = P × I: 1 a 5 baixo, 
 RISCOS = [
     {"id": "R1", "risco": "Cadastro de unidades e equipamentos desatualizado leva a decisão errada sobre a rede", "origem": "Natureza do processo", "p": 4, "i": 4},
     {"id": "R2", "risco": "Perda de dados por falta de backup testado", "origem": "Pendência de SR2 em docs/SEGURANCA.md", "p": 3, "i": 5},
-    {"id": "R3", "risco": "Conta comprometida (senha fraca, sem MFA)", "origem": "SEC-019; QA S4", "p": 3, "i": 4},
+    {"id": "R3", "risco": "Conta comprometida (senha fraca ou vazada)", "origem": "SEC-019 (MFA já implantado); QA S4", "p": 2, "i": 4},
     {"id": "R4", "risco": "Dependências com vulnerabilidades conhecidas", "origem": "QA S5 (pip-audit)", "p": 3, "i": 4},
     {"id": "R5", "risco": "Equipamento crítico parado sem que a gestão perceba", "origem": "Operação da rede", "p": 3, "i": 4},
     {"id": "R6", "risco": "Servidor fora do ar (o Learner Lab desliga ao fim da sessão)", "origem": "docs/AWS_DEPLOY.md", "p": 5, "i": 2},
@@ -71,7 +71,7 @@ RISCOS = [
 MITIGACAO = [
     {"risco": "R1", "acao": "Revisão mensal do cadastro com as unidades; manter o fluxo de aprovação.", "responsavel": "Gestão da Informação", "prazo": "Curto", "mexe": "Não"},
     {"risco": "R2", "acao": "Definir rotina de backup do banco (dump agendado para o S3 versionado) e testar a restauração a cada trimestre.", "responsavel": "Equipe técnica", "prazo": "Curto", "mexe": "AWS; testar antes em cópia"},
-    {"risco": "R3", "acao": "Política de senha mais forte (recusar senhas comuns, limite de 72 bytes do bcrypt) e MFA ou delegação ao provedor OIDC.", "responsavel": "Equipe técnica", "prazo": "Médio", "mexe": "Código; branch separada"},
+    {"risco": "R3", "acao": "MFA (TOTP) já é obrigatório para todos os perfis no login local e o Keycloak exige OTP no SSO. Falta a política de senha mais forte (recusar senhas comuns, limite de 72 bytes do bcrypt).", "responsavel": "Equipe técnica", "prazo": "Médio", "mexe": "Código; branch separada"},
     {"risco": "R4", "acao": "Atualizar PyJWT, cryptography e Flask, rodar a suíte e repetir o pip-audit.", "responsavel": "Equipe técnica", "prazo": "Médio", "mexe": "Dependências; branch separada"},
     {"risco": "R5", "acao": "Acompanhar semanalmente a classificação Crítica e Atenção e as manutenções abertas; definir quem age em cada caso.", "responsavel": "Gestor e Gestão da Informação", "prazo": "Curto", "mexe": "Não"},
     {"risco": "R6", "acao": "Ligar o laboratório com 10 minutos de antecedência antes de demonstrações; documentar o religamento.", "responsavel": "Equipe técnica", "prazo": "Curto", "mexe": "Não"},
@@ -105,7 +105,7 @@ COBIT = [
     ("APO12 - Gestão de riscos", "Relatório de segurança com severidade, QA com achados priorizados e matriz de riscos nesta área", "Revisão periódica da matriz"),
     ("APO14 - Gestão de dados", "Minimização, validação de entrada, importação com prévia e confirmação, hash SHA-256", "Dono dos dados e rotina de revisão da qualidade do cadastro"),
     ("BAI09 - Gestão de ativos", "Cadastro de equipamentos com situação, manutenções preventivas e corretivas e custo", "Registro do descarte e da vida útil"),
-    ("DSS05 - Serviços de segurança", "bcrypt, RBAC, CSRF, rate limit, HTTPS com HSTS, criptografia em repouso (EBS e S3)", "MFA, política de senha mais forte, dependências atualizadas"),
+    ("DSS05 - Serviços de segurança", "bcrypt, MFA (TOTP) obrigatório, RBAC, CSRF, rate limit, HTTPS com HSTS, criptografia em repouso (EBS e S3)", "Política de senha mais forte, dependências atualizadas"),
     ("DSS06 - Controles dos processos de negócio", "Fluxo de aprovação (pendente, aprovado, rejeitado) e trilha de auditoria", "Escopo por unidade para o Responsável pela Saúde Bucal"),
     ("MEA01 - Monitoramento de desempenho e conformidade", "Dashboard, indicadores de manutenção, testes automáticos e os indicadores desta área", "Monitoramento do servidor e alertas"),
     ("MEA03 - Conformidade com requisitos externos", "Página de privacidade, Meus dados, pedidos de titulares e retenção da trilha", "Encarregado designado e base legal confirmada"),
@@ -114,7 +114,7 @@ COBIT = [
 COBIT_NOTA = "O objetivo APO10 (gestão de fornecedores) só se aplica ao ORIS em relação à AWS, como fornecedor de nuvem (ver Nuvem)."
 
 PLANO_AUDITORIA = [
-    ("Semanal", "Revisar LOGIN_FALHA e LOGIN_BLOQUEADO: muitos erros para o mesmo e-mail ou IP, ou logins em horário incomum", "Filtro por resultado na tela de auditoria", "Gestão da Informação"),
+    ("Semanal", "Revisar LOGIN_FALHA, LOGIN_BLOQUEADO, MFA_FALHA e MFA_BLOQUEADO: muitos erros para o mesmo e-mail ou IP, ou logins em horário incomum", "Filtro por resultado na tela de auditoria", "Gestão da Informação"),
     ("Semanal", "Revisar a administração de usuários (criação, desativação, troca de perfil, redefinição de senha)", "Filtro por ação", "Gestão da Informação; Administrador confirma"),
     ("Semanal", "Conferir pedidos de titulares abertos e vencidos", "Tela de pedidos de titulares", "Administrador"),
     ("Mensal", "Conferir aprovações e rejeições: quem aprovou o quê, rejeições sem justificativa, pendências paradas", "Tela de aprovações e trilha", "Gestão da Informação"),
