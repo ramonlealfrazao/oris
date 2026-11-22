@@ -1,5 +1,3 @@
-"""CRUD de Serviços de Saúde Bucal (Fase 6), com fluxo de aprovação integrado a partir da..."""
-
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 from app.extensions import db

@@ -1,5 +1,3 @@
-"""Testes da FASE 2 - banco de dados e models."""
-
 import pytest
 from sqlalchemy.exc import IntegrityError
 
@@ -10,7 +8,6 @@ from config import TestingConfig
 
 @pytest.fixture
 def app():
-    """Cria uma app Flask com banco SQLite em memória, com as tabelas já criadas, para..."""
     app = create_app(TestingConfig)
 
     with app.app_context():
@@ -137,7 +134,7 @@ def test_relacionamento_alteracao_usuario_criador_e_aprovador(app):
         usuario_id=criador.id,
         tabela="unidades",
         registro_id=1,
-        operacao=TipoOperacaoAlteracao.ALTERAR_SITUACAO,  # campo obrigatório desde a Fase 7
+        operacao=TipoOperacaoAlteracao.ALTERAR_SITUACAO,
         descricao="Alteração de teste",
         status=StatusAlteracao.APROVADO,
         approved_by=aprovador.id,
@@ -204,7 +201,6 @@ def test_email_de_usuario_deve_ser_unico(app):
 
 
 def test_cnes_pode_ser_repetido_em_unidades_distintas(app):
-    """CONTRATO NOVO (Stage "modelo de dados")"""
     from app.models import Unidade, SituacaoUnidade
 
     u1 = Unidade(nome="Policlínica Central", cnes="1234567", situacao=SituacaoUnidade.ATIVA)

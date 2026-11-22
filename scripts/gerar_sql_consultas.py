@@ -1,5 +1,3 @@
-"""Gera database/consultas_etapa03.sql a partir do catálogo usado pela aplicação..."""
-
 import re
 import sys
 from pathlib import Path

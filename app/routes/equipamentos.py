@@ -1,5 +1,3 @@
-"""CRUD de Equipamentos (Fase 6), com fluxo de aprovação integrado a partir da Fase 7."""
-
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 from app.extensions import db
@@ -41,7 +39,6 @@ def _preencher_choices(form):
 
 
 def _validar_servico_pertence_a_unidade(servico_id, unidade_id):
-    """Retorna (servico, mensagem_de_erro)."""
     if servico_id is None:
         return None, None
 

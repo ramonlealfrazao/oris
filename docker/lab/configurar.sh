@@ -1,9 +1,4 @@
 #!/bin/sh
-# Atalhos do laboratorio visual (um comando cada, no terminal da EC2):
-#   sudo sh /opt/oris/docker/lab/configurar.sh oidc SEGREDO_DO_CLIENT   -> liga o login institucional (Fase 6)
-#   sudo sh /opt/oris/docker/lab/configurar.sh s3 NOME_DO_BUCKET        -> liga a exportacao ao S3 (Fase 7)
-#   sudo sh /opt/oris/docker/lab/configurar.sh ip SEU_NOVO_IP           -> seu IP mudou e os consoles deram 403
-#   sudo sh /opt/oris/docker/lab/configurar.sh enderecos                -> mostra os enderecos do laboratorio
 set -eu
 cd "$(dirname "$0")/../.."
 ENV=.env.lab

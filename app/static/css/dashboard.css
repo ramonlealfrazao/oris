@@ -1,19 +1,9 @@
-/*
- * ORIS - Dashboard (Fase 13B, Etapa 1)
- * ---------------------------------------------------------------
- * Estilo da tela de Dashboard: hero, KPI cards, resumo da rede e
- * atividade recente. Nenhum dado é definido aqui - só apresentação
- * dos valores que app/services/dashboard_service.py já calcula.
- */
-
-/* ---- Hero -------------------------------------------------------- */
-
 .oris-hero {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 2rem;
-    background-color: var(--oris-navy); /* fallback para navegadores/motores sem suporte a gradiente moderno */
+    background-color: var(--oris-navy);
     background: linear-gradient(120deg, var(--oris-navy), var(--oris-petroleum));
     color: var(--oris-text-on-dark);
     border-radius: var(--oris-radius-lg);
@@ -55,7 +45,6 @@
     height: 100%;
 }
 
-/* ---- Grade de indicadores (KPIs) ------------------------------------ */
 
 .oris-kpi-grid {
     display: grid;
@@ -128,9 +117,9 @@
     color: var(--oris-teal);
 }
 
-/* Card de destaque (governança/ação pendente) - Fase 13B item 13. */
+
 .oris-kpi-card--highlight {
-    background-color: var(--oris-petroleum); /* fallback para navegadores/motores sem suporte a gradiente moderno */
+    background-color: var(--oris-petroleum);
     background: linear-gradient(135deg, var(--oris-teal), var(--oris-petroleum));
     border-color: transparent;
     color: var(--oris-white);
@@ -155,7 +144,6 @@
     text-decoration: underline;
 }
 
-/* ---- Seções (Resumo da rede / Atividade recente) --------------------- */
 
 .oris-section-title {
     font-size: var(--oris-fs-lg);
@@ -168,11 +156,6 @@
     margin-bottom: 1rem;
 }
 
-/* .oris-panel foi movido para oris-design-system.css (Fase 13B,
-   Stage 2A) — é um componente genérico de "cartão de conteúdo",
-   reutilizado também pelas telas de Unidades, não só pelo Dashboard. */
-
-/* ---- Timeline de atividade recente ------------------------------------ */
 
 .oris-timeline {
     list-style: none;
@@ -215,7 +198,6 @@
     color: var(--oris-text-muted);
 }
 
-/* ---- Responsividade específica do Dashboard --------------------------- */
 
 @media (max-width: 1199.98px) {
     .oris-kpi-grid {

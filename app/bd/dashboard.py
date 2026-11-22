@@ -1,10 +1,3 @@
-"""Dashboard estatístico integrado (Etapa 06) - todos os números vêm do MySQL.
-
-Usa as VIEWS criadas em database/etapa05_objetos.sql. Filtros interativos: período (data de
-abertura da manutenção), tipo e situação da unidade e tipo de manutenção.
-Todos os filtros viajam como parâmetros do driver (%(nome)s).
-"""
-
 from datetime import date
 
 from app.bd.conexao import consultar, consultar_um
@@ -12,10 +5,6 @@ from app.bd.conexao import consultar, consultar_um
 SITUACOES_UNIDADE = ("ATIVA", "INATIVA", "MANUTENCAO")
 TIPOS_MANUTENCAO = ("PREVENTIVA", "CORRETIVA")
 
-# Filtros comuns (repetidos de forma literal em cada SQL, como exige
-# tests/test_bd_sql_estatico.py - nada de SQL montado por f-string):
-#   unidades   : (%(unidade_tipo)s IS NULL OR p.tipo = ...) AND (%(unidade_situacao)s IS NULL OR ...)
-#   manutencoes: os de unidades + tipo_manutencao, data_ini e data_fim (data de abertura)
 
 SQL_KPI_UNIDADES = """
     SELECT COUNT(*)                              AS unidades,
@@ -160,7 +149,6 @@ def _data(valor):
 
 
 def ler_filtros(args):
-    """Valida os filtros vindos da URL; valor inválido vira 'sem filtro'."""
     situacao = args.get("unidade_situacao")
     tipo_m = args.get("tipo_manutencao")
     return {
@@ -187,7 +175,6 @@ def _serie(linhas, *colunas):
 
 
 def _tendencia(mensal):
-    """Variação % do último mês do período em relação ao anterior (qtd de manutenções)."""
     qtds = mensal["qtd"]
     if len(qtds) < 2 or not qtds[-2]:
         return None

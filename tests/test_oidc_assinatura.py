@@ -1,14 +1,3 @@
-"""OIDC: verificação criptográfica do id_token (assinatura, exp e iat).
-
-Antes, o ORIS lia as claims do id_token sem verificar a assinatura nem a
-expiração. A especificação OIDC permite dispensar a assinatura quando o token
-vem direto do endpoint de token por TLS, mas essa premissa cai com
-OIDC_ALLOW_INSECURE e o `exp` nunca foi conferido. Estes testes fixam o
-comportamento novo: o id_token só é aceito se tiver assinatura válida de uma
-chave publicada no JWKS do provedor, algoritmo assimétrico permitido e datas
-coerentes.
-"""
-
 import base64
 import json
 import time
@@ -53,7 +42,6 @@ def _claims(**extra):
 
 @pytest.fixture
 def provedor(monkeypatch, chave):
-    """Provedor simulado; `ctx` permite trocar o id_token e o JWKS por teste."""
     ctx = {"id_token": None, "jwks": jwks_de(chave), "metadados_extra": {}}
 
     def fake_get(url, cabecalhos=None):
@@ -89,7 +77,7 @@ def test_id_token_com_assinatura_valida_e_aceito(provedor, chave):
 
 
 def test_assinatura_de_outra_chave_e_recusada(provedor, chave_do_atacante):
-    provedor["id_token"] = assinar(_claims(), chave_do_atacante)  # mesmo kid, chave errada
+    provedor["id_token"] = assinar(_claims(), chave_do_atacante)
     with pytest.raises(OidcError):
         _concluir()
 
@@ -119,7 +107,6 @@ def test_confusao_de_algoritmo_hs256_com_chave_publica_e_recusada(provedor, chav
     pem_publica = chave.public_key().public_bytes(
         serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
     )
-    # PyJWT recusa assinar HS256 com PEM; montamos o token à mão, como um atacante faria.
     import hashlib
     import hmac
 
@@ -132,7 +119,7 @@ def test_confusao_de_algoritmo_hs256_com_chave_publica_e_recusada(provedor, chav
     provedor["id_token"] = f"{cab}.{car}.{sig}"
     with pytest.raises(OidcError):
         _concluir()
-    assert jwt  # garante que o import acima não foi removido por lint
+    assert jwt
 
 
 def test_token_expirado_e_recusado(provedor, chave):

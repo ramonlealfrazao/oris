@@ -1,6 +1,3 @@
-# Acrescenta LDAP (OpenLDAP) e OIDC (Keycloak) ao ORIS na AWS. Usar JUNTO do compose da AWS:
-#   sudo docker compose -f docker-compose.aws.yml -f docker-compose.idp.yml --env-file .env.aws up -d --build
-# Antes: gerar os certificados do LDAP e o realm do Keycloak (ver docs/AWS_DEPLOY.md).
 services:
   ldap:
     image: osixia/openldap:1.5.0
@@ -25,7 +22,6 @@ services:
       default:
         aliases:
           - ldap.oris.local
-    # Sem "ports": so a app alcanca o LDAP, dentro da rede do Docker.
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
@@ -38,8 +34,6 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
       JAVA_OPTS_KC_HEAP: "-Xms256m -Xmx640m"
-      # O Keycloak le os usuarios do OpenLDAP (federacao) com STARTTLS e precisa
-      # confiar na CA propria do laboratorio para validar o certificado do LDAP.
       KC_TRUSTSTORE_PATHS: /opt/keycloak/conf/truststores/ca.crt
     depends_on:
       - ldap
@@ -75,8 +69,6 @@ services:
       OIDC_CLIENT_ID: oris
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?defina OIDC_CLIENT_SECRET}
       OIDC_CLAIM_GROUPS: groups
-      # Usuarios do LDAP entram pelo SSO e o ORIS os reconhece pela claim ldap_uid
-      # (so o Keycloak a emite, e so para quem vem do LDAP federado).
       OIDC_CLAIM_LDAP_UID: ldap_uid
 
 volumes:

@@ -1,27 +1,9 @@
--- ORIS - Plataforma de Governança da Rede de Saúde Bucal
--- Schema do banco de dados MySQL - FASE 2
---
--- Este arquivo reflete os models SQLAlchemy definidos em
--- app/models/. Ele pode ser usado para criar o banco manualmente,
--- mas o método recomendado (usado em desenvolvimento/testes) é
--- deixar o SQLAlchemy criar as tabelas a partir dos models
--- (db.create_all()), garantindo que código e schema nunca fiquem
--- dessincronizados.
---
--- Nesta fase NÃO existem: login funcional, RBAC, fluxo de aprovação
--- ou dashboard - apenas a estrutura de dados.
-
 CREATE DATABASE IF NOT EXISTS oris_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
 USE oris_db;
 
--- Tabela: usuarios
--- Usuários do sistema. O campo senha_hash armazenará um hash
--- bcrypt a partir da FASE 3 - nesta fase o campo só existe.
--- O campo perfil já define os 4 perfis previstos; as regras de
--- permissão de cada perfil (RBAC) serão implementadas na FASE 4.
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT NOT NULL AUTO_INCREMENT,
     nome VARCHAR(150) NOT NULL,
@@ -42,10 +24,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
     KEY ix_usuarios_identificador_externo (identificador_externo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------
--- Tabelas: grupos e usuario_grupos (Fase 14 - Requisito 3)
--- Grupos vindos do LDAP/OIDC e a associacao N:N com usuarios.
--- ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS grupos (
     id INT NOT NULL AUTO_INCREMENT,
     nome VARCHAR(150) NOT NULL,
@@ -65,16 +43,6 @@ CREATE TABLE IF NOT EXISTS usuario_grupos (
     CONSTRAINT fk_usuario_grupos_grupo FOREIGN KEY (grupo_id) REFERENCES grupos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabela: unidades
--- Registro de Unidade de Saúde Bucal - entidade central do MVP.
---
--- REDESENHO DO MODELO DE DADOS (ver database/migrations/0001_...sql
--- e docs/STAGE_MODELO_DE_DADOS.md): o CNES NÃO é mais único. A
--- documentação real do cliente mostra que o mesmo CNES pode
--- corresponder a mais de um registro de Unidade (unidade mista, ex.:
--- Policlínica + Maternidade sob o mesmo CNES) - `id` (interno) é o
--- identificador de negócio, `cnes` é só um atributo de referência.
--- `unidade_e_mista` marca esse cenário explicitamente.
 CREATE TABLE IF NOT EXISTS unidades (
     id INT NOT NULL AUTO_INCREMENT,
     nome VARCHAR(200) NOT NULL,
@@ -93,10 +61,6 @@ CREATE TABLE IF NOT EXISTS unidades (
     KEY ix_unidades_cnes (cnes)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabela: servicos
--- Um Serviço pode ou não estar vinculado a uma Unidade - a
--- documentação real do cliente descreve serviços sem vínculo com
--- uma unidade tradicional (ex.: ponto de vacinação em shopping).
 CREATE TABLE IF NOT EXISTS servicos (
     id INT NOT NULL AUTO_INCREMENT,
     unidade_id INT NULL,
@@ -111,11 +75,6 @@ CREATE TABLE IF NOT EXISTS servicos (
         FOREIGN KEY (unidade_id) REFERENCES unidades (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabela: equipamentos
--- Um Equipamento pode ou não estar vinculado a uma Unidade (ex.:
--- ambulância do SAMU). Associação a um Serviço continua opcional e é
--- independente de unidade_id estar preenchido em qualquer um dos
--- dois lados.
 CREATE TABLE IF NOT EXISTS equipamentos (
     id INT NOT NULL AUTO_INCREMENT,
     unidade_id INT NULL,
@@ -135,10 +94,6 @@ CREATE TABLE IF NOT EXISTS equipamentos (
         FOREIGN KEY (servico_id) REFERENCES servicos (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabela: manutencoes (Etapa 06)
--- Historico de manutencao dos equipamentos. Os triggers de
--- database/etapa05_objetos.sql validam as datas/custo e mantem a
--- situacao do equipamento coerente (corretiva aberta => INATIVO).
 CREATE TABLE IF NOT EXISTS manutencoes (
     id INT NOT NULL AUTO_INCREMENT,
     equipamento_id INT NOT NULL,
@@ -156,19 +111,7 @@ CREATE TABLE IF NOT EXISTS manutencoes (
         FOREIGN KEY (equipamento_id) REFERENCES equipamentos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Funcoes, procedimentos, triggers e views: database/etapa05_objetos.sql
--- (aplicados por database/aplicar_migracoes.py).
 
--- Tabela: alteracoes
--- Fluxo de aprovação (FASE 7). `tabela` + `registro_id` referenciam
--- de forma genérica o registro afetado (ex.: tabela='unidades',
--- registro_id=5), por isso registro_id não é uma foreign key
--- tradicional. `registro_id` é NULL enquanto uma operação CRIAR
--- ainda está PENDENTE (o registro ainda não existe).
--- `operacao` e `dados_novos` foram adicionados na FASE 7: sem eles
--- não haveria como saber, no momento da aprovação, o que aplicar
--- (criar/editar/mudar situação) nem com quais valores - ver
--- app/models/alteracao.py para a justificativa completa.
 CREATE TABLE IF NOT EXISTS alteracoes (
     id INT NOT NULL AUTO_INCREMENT,
     usuario_id INT NOT NULL,
@@ -191,11 +134,6 @@ CREATE TABLE IF NOT EXISTS alteracoes (
         FOREIGN KEY (approved_by) REFERENCES usuarios (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabela: auditorias
--- Trilha de auditoria (audit log), funcional a partir da FASE 8.
--- `valor_anterior`/`valor_novo` guardam (em JSON) só os campos que
--- realmente mudaram numa edição/alteração de situação - nunca senha
--- ou senha_hash.
 CREATE TABLE IF NOT EXISTS auditorias (
     id INT NOT NULL AUTO_INCREMENT,
     usuario_id INT NULL,

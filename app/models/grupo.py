@@ -1,13 +1,3 @@
-"""
-Model Grupo e tabela de associação usuário<->grupo.
-
-Grupos são populados a partir de diretórios externos (LDAP/OIDC) pelo
-módulo app/services/diretorio_service.py. O ORIS não dá permissão a
-um grupo diretamente: a permissão continua sendo o `perfil` do
-usuário (RBAC); o mapeamento grupo -> perfil fica na configuração
-`DIRETORIO_MAPA_GRUPO_PERFIL` e é aplicado na sincronização.
-"""
-
 from app.extensions import db
 from app.models.enums import OrigemDiretorio
 from app.models.mixins import TimestampMixin

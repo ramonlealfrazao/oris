@@ -1,5 +1,3 @@
-"""Rotas de Alterações - fluxo de aprovação (Fase 7)."""
-
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 from app.extensions import db

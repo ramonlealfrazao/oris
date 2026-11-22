@@ -1,5 +1,3 @@
-# Igual ao Caddyfile, mais o Keycloak (OIDC) em kc.<dominio>. O console de administracao
-# e o realm "master" NAO ficam expostos na internet (403).
 {$ORIS_DOMAIN} {
 	encode gzip
 	header {

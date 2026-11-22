@@ -1,5 +1,3 @@
-"""Importador de planilhas (Fase 10)."""
-
 import csv
 import io
 import os
@@ -45,14 +43,12 @@ _SINGULAR_POR_TIPO_REDE = {"UNIDADE": "unidade", "SERVICO": "serviço", "EQUIPAM
 
 
 def _diretorio_temporario():
-    """Pasta dedicada para os arquivos temporários da importação - fora de..."""
     caminho = os.path.join(tempfile.gettempdir(), "oris_importacoes")
     os.makedirs(caminho, exist_ok=True)
     return caminho
 
 
 def _salvar_arquivo_temporario(arquivo, extensao):
-    """Cifra e salva o upload com um nome aleatório gerado pelo servidor."""
     token = f"{uuid.uuid4().hex}{extensao}"
     caminho = os.path.join(_diretorio_temporario(), token)
     with open(caminho, "wb") as destino:
@@ -61,7 +57,6 @@ def _salvar_arquivo_temporario(arquivo, extensao):
 
 
 def _ler_conteudo_temporario(token):
-    """Bytes originais da planilha enviada (o arquivo temporário fica cifrado em disco)."""
     caminho = _caminho_do_token(token)
     with open(caminho, "rb") as arquivo:
         return decifrar_bytes(arquivo.read())
@@ -72,14 +67,12 @@ def _ler_arquivo_temporario(token, extensao):
 
 
 def _caminho_do_token(token):
-    """Resolve um token para o caminho completo em disco, sempre dentro da pasta..."""
     if not token or "/" in token or "\\" in token or ".." in token:
         abort(400)
     return os.path.join(_diretorio_temporario(), token)
 
 
 def _remover_temporario(token):
-    """Remove o arquivo temporário, se existir - best-effort"""
     if not token:
         return
     caminho = _caminho_do_token(token)
@@ -302,9 +295,6 @@ def confirmar():
     hash_arquivo = None
     try:
         conteudo = _ler_conteudo_temporario(token)
-        # Hash da planilha ORIGINAL (já decifrada), e não do arquivo cifrado em disco:
-        # fica na auditoria como prova de qual planilha foi importada e confere com o
-        # `sha256sum` que o remetente calcular no arquivo dele.
         hash_arquivo = sha256_hex(conteudo)
         df = ler_planilha(io.BytesIO(conteudo), extensao)
     except (ArquivoInvalidoError, DadosCifradosInvalidos) as erro:

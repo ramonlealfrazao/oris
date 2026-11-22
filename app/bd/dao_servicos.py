@@ -1,5 +1,3 @@
-"""DAO de Serviços - SQL explícito (PyMySQL / DB-API)."""
-
 from app.bd import dao_auditoria
 from app.bd.conexao import ErroBanco, consultar, consultar_um, transacao
 

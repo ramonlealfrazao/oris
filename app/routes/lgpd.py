@@ -1,5 +1,3 @@
-"""Direitos do titular de dados (LGPD, art. 18)."""
-
 from flask import Blueprint, Response, abort, flash, redirect, render_template, url_for
 
 from app.extensions import db

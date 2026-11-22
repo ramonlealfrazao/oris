@@ -1,5 +1,3 @@
-"""Testes da FASE 9 - Dashboard."""
-
 import pytest
 
 from app import create_app
@@ -173,12 +171,12 @@ def test_alteracoes_pendentes_aprovadas_rejeitadas_contabilizadas(client, app):
 
     resp = client.get("/dashboard")
     html = resp.get_data(as_text=True)
-    assert "teste pendente" not in html or True  # descricao nao exibida diretamente, ok
-    assert "1" in html  # smoke check: dashboard renderizou sem erro
+    assert "teste pendente" not in html or True
+    assert "1" in html
 
 
 def test_atividade_recente_utiliza_auditoria_real(client, app):
-    _login(client, PerfilUsuario.ADMINISTRADOR)  # gera auditoria de LOGIN
+    _login(client, PerfilUsuario.ADMINISTRADOR)
 
     resp = client.get("/dashboard")
     assert resp.status_code == 200
@@ -208,7 +206,7 @@ def test_senha_e_hash_nunca_aparecem_no_dashboard(client, app):
 
     assert SENHA not in html
     assert "senha_hash" not in html
-    assert "$2b$" not in html  # assinatura de hash bcrypt
+    assert "$2b$" not in html
 
 
 def test_filtro_por_situacao_no_resumo_da_rede(client):

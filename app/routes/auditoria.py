@@ -1,5 +1,3 @@
-"""Consulta de auditoria (Fase 8)."""
-
 from flask import Blueprint, abort, render_template, request
 
 from app.extensions import db
@@ -44,7 +42,7 @@ def listar():
     if tabela_filtro:
         query = query.filter(Auditoria.tabela == tabela_filtro)
 
-    data_filtro = request.args.get("data")  # formato YYYY-MM-DD
+    data_filtro = request.args.get("data")
     if data_filtro:
         query = query.filter(db.func.date(Auditoria.data_hora) == data_filtro)
 

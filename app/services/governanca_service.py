@@ -1,5 +1,3 @@
-"""Indicadores ao vivo e cálculos da área de Governança."""
-
 from sqlalchemy import case, func
 
 from app.extensions import db
@@ -41,7 +39,6 @@ def riscos_com_nivel():
 
 
 def mapa_de_calor():
-    """Matriz 5x5 (impacto de 5 a 1, probabilidade de 1 a 5) com os ids dos riscos."""
     linhas = []
     for impacto in range(5, 0, -1):
         celulas = []
@@ -81,7 +78,6 @@ def _soma_custo(situacao):
 
 
 def indicadores():
-    """Números por princípio da ISO 38500, calculados na hora."""
     por_perfil = {
         perfil: Usuario.query.filter_by(perfil=perfil, ativo=True).count() for perfil in PerfilUsuario
     }

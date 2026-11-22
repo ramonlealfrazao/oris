@@ -1,5 +1,3 @@
-"""API REST do ORIS - v1 (somente leitura)."""
-
 from functools import wraps
 
 from flask import Blueprint, abort, jsonify, render_template, request
@@ -17,7 +15,6 @@ LIMITE_MAXIMO = 200
 
 @api_bp.after_request
 def _nao_cachear(resposta):
-    """Respostas da API dependem da sessão: proxies e navegadores não devem guardá-las."""
     resposta.headers.setdefault("Cache-Control", "no-store")
     return resposta
 

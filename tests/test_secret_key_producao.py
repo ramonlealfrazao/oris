@@ -1,5 +1,3 @@
-"""Segurança: a aplicação não pode iniciar em produção com SECRET_KEY padrão."""
-
 import pytest
 
 from app import create_app

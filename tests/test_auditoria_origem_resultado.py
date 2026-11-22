@@ -1,9 +1,3 @@
-"""Audit trail completo (documento do Humberto): QUEM, O QUE, QUANDO, DE ONDE e RESULTADO.
-
-Cobre origem (IP), resultado (SUCESSO/FALHA) e o registro de tentativas de login
-que falham (que nao tem usuario vinculado).
-"""
-
 import pytest
 
 from app import create_app
@@ -48,7 +42,6 @@ def _postar(client, email, senha, ip="203.0.113.7"):
 
 
 def _login_pelo_cliente(client, email, senha, ip="203.0.113.7"):
-    # o formulario tem CSRF desligado no TestingConfig
     return _postar(client, email, senha, ip)
 
 
@@ -70,7 +63,7 @@ def test_login_com_senha_errada_e_registrado_como_falha(app):
         assert reg.resultado == "FALHA"
         assert reg.origem_ip == "198.51.100.21"
         assert reg.identificador_tentado == EMAIL
-        assert reg.usuario_id is not None  # usuario existe, senha errada
+        assert reg.usuario_id is not None
         assert "senha" not in (reg.descricao or "").lower() or "SenhaForte" not in (reg.descricao or "")
 
 
@@ -87,10 +80,10 @@ def test_login_com_usuario_inexistente_e_registrado_sem_usuario(app):
 def test_login_de_usuario_inativo_e_falha_e_nao_revela_motivo_ao_usuario(app):
     c = app.test_client()
     resp = _login_pelo_cliente(c, "inativo@oris.com.br", SENHA)
-    assert resp.status_code == 200  # volta ao formulario (mensagem generica)
+    assert resp.status_code == 200
     with app.app_context():
         reg = Auditoria.query.filter_by(acao="LOGIN_FALHA").one()
-        assert "inativ" in reg.descricao.lower()  # o motivo fica so na trilha
+        assert "inativ" in reg.descricao.lower()
 
 
 def test_senha_digitada_nunca_e_gravada_na_auditoria(app):
@@ -107,7 +100,7 @@ def test_identificador_tentado_e_limitado(app):
     _login_pelo_cliente(c, "x" * 400 + "@oris.com.br", "qualquer")
     with app.app_context():
         reg = Auditoria.query.filter_by(acao="LOGIN_FALHA").first()
-        if reg is not None:  # o formulario pode rejeitar e-mail enorme antes
+        if reg is not None:
             assert len(reg.identificador_tentado) <= 255
 
 

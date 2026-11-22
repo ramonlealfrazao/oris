@@ -1,5 +1,3 @@
-"""Testes da FASE 12 - segurança, LGPD e proteção de dados."""
-
 import io
 
 import pytest
@@ -31,14 +29,10 @@ EMAILS = {
 
 
 class TestingConfigComCSRF(TestingConfig):
-    """Só para os testes de CSRF desta fase, que precisam que a proteção esteja de fato..."""
-
     WTF_CSRF_ENABLED = True
 
 
 class TestingConfigComRateLimit(TestingConfig):
-    """Só para o teste de rate limiting desta fase."""
-
     RATE_LIMIT_LOGIN_ENABLED = True
 
 
@@ -160,7 +154,6 @@ def test_administracao_de_usuarios_acessada_por_perfil_sem_permissao_retorna_403
 
 
 def test_post_sem_csrf_e_bloqueado():
-    """Usa uma config com CSRF de fato ativo para comprovar o bloqueio (TestingConfig..."""
     app = create_app(TestingConfigComCSRF)
     with app.app_context():
         db.create_all()
@@ -335,7 +328,6 @@ def test_alteracao_aprovada_gera_auditoria(client, app):
 
 
 def test_rollback_nao_gera_auditoria_falsa(client, app):
-    """CONTRATO ATUALIZADO (Stage "modelo de dados")"""
     _login(client, PerfilUsuario.RESPONSAVEL_SAUDE_BUCAL)
 
     dados_a = {"nome": "UBS Rollback A", "cnes": "1230044", "tipo": "UBS", "cidade": "Recife", "uf": "PE", "situacao": "ATIVA"}
@@ -348,7 +340,7 @@ def test_rollback_nao_gera_auditoria_falsa(client, app):
             "unidades",
             None,
             "CRIAR",
-            {"cnes": "1230099", "situacao": "ATIVA"},  # sem "nome" -> NOT NULL
+            {"cnes": "1230099", "situacao": "ATIVA"},
             "Alteração deliberadamente inválida para testar rollback",
         )
 

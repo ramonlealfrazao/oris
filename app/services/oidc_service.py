@@ -1,29 +1,3 @@
-"""
-Login via OpenID Connect (Requisito 3 — consumo de credenciais OIDC).
-
-Fluxo Authorization Code com PKCE (S256):
-
-1. `iniciar_autorizacao` monta a URL do provedor (descoberta via
-   `/.well-known/openid-configuration`) e gera `state`, `nonce` e
-   `code_verifier` — guardados na sessão do navegador.
-2. O provedor redireciona de volta com `code` e `state`; a rota
-   confere o `state` (anti-CSRF).
-3. `concluir_autorizacao` troca o `code` no endpoint de token (canal
-   direto servidor-a-servidor, por HTTPS), VERIFICA o id_token
-   (assinatura contra o JWKS do provedor, algoritmo assimétrico da lista
-   permitida, `exp`/`iat` com tolerância de relógio), confere `iss`, `aud`
-   e `nonce` e lê as claims (sub, nome, e-mail, grupos) do `userinfo`.
-   A especificação (OIDC Core 3.1.3.7) permitiria dispensar a assinatura
-   quando o token vem direto do endpoint por TLS, mas essa premissa cai
-   com OIDC_ALLOW_INSECURE e não cobre um `exp` vencido; por isso o ORIS
-   verifica sempre.
-4. As claims viram um `UsuarioExterno`, provisionado nas tabelas locais
-   por app/services/diretorio_service.py.
-
-Só usa a biblioteca padrão (urllib). Endpoints http:// são recusados
-exceto com OIDC_ALLOW_INSECURE=true (laboratório).
-"""
-
 import base64
 import hashlib
 import json
@@ -38,8 +12,6 @@ from app.services.diretorio_service import DiretorioConfigError, UsuarioExterno
 
 TIMEOUT_SEGUNDOS = 10
 
-# Só algoritmos assimétricos: HS* e "none" ficam de fora de propósito (um
-# atacante poderia assinar com a chave pública como se fosse segredo HMAC).
 ALGORITMOS_PERMITIDOS = (
     "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512",
 )
@@ -47,8 +19,7 @@ TOLERANCIA_RELOGIO_SEGUNDOS = 60
 
 
 class OidcError(Exception):
-    """Falha no fluxo OIDC (mensagem segura para log; ao usuário vai
-    sempre uma mensagem genérica)."""
+    pass
 
 
 def oidc_habilitado(config=None):
@@ -89,8 +60,6 @@ def _b64url(dados: bytes) -> str:
 
 
 def iniciar_autorizacao(redirect_uri, config=None):
-    """Devolve (url_de_autorizacao, estado). `estado` deve ser guardado
-    na sessão até o callback."""
     config = config if config is not None else current_app.config
     metadados = _descobrir(config)
 
@@ -110,9 +79,6 @@ def iniciar_autorizacao(redirect_uri, config=None):
         "code_challenge": desafio,
         "code_challenge_method": "S256",
     }
-    # prompt=login obriga o provedor a pedir a senha de novo, mesmo havendo sessão SSO
-    # aberta no navegador (sair do ORIS não encerra a sessão do Keycloak). Vazio = deixa
-    # o provedor reaproveitar a sessão.
     prompt = str(config.get("OIDC_PROMPT", "") or "").strip()
     if prompt:
         parametros["prompt"] = prompt
@@ -121,10 +87,6 @@ def iniciar_autorizacao(redirect_uri, config=None):
 
 
 def _verificar_id_token(id_token, metadados, config):
-    """Verifica assinatura e datas do id_token e devolve as claims.
-
-    Levanta OidcError (ou DiretorioConfigError se o JWKS não for https://).
-    """
     jwks_uri = metadados.get("jwks_uri")
     if not jwks_uri:
         raise OidcError("Provedor sem jwks_uri: não há como verificar a assinatura.")
@@ -161,8 +123,6 @@ def _verificar_id_token(id_token, metadados, config):
 
 
 def concluir_autorizacao(codigo, estado, redirect_uri, config=None):
-    """Troca o `code` por tokens, valida o id_token e devolve um
-    `UsuarioExterno` com as claims do usuário."""
     config = config if config is not None else current_app.config
     metadados = _descobrir(config)
     _exigir_https(metadados["token_endpoint"], config)

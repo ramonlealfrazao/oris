@@ -1,22 +1,5 @@
--- ORIS - Etapa 03 - Massa de dados FICTÍCIA para demonstração
--- Gerado por scripts/gerar_seed_etapa03.py (determinístico).
---
--- ATENÇÃO: limpa unidades/serviços/equipamentos/alterações antes de
--- inserir. Use APENAS em banco de desenvolvimento/apresentação.
--- A tabela usuarios NÃO é apagada (usuários demo entram com INSERT IGNORE)
--- e a trilha de auditorias é preservada.
---
--- Usuários de demonstração (senha de todos: Oris@2026 - troque depois):
---   admin.demo@oris.example      ADMINISTRADOR
---   gi.demo@oris.example         GESTAO_INFORMACAO
---   rsb.demo@oris.example        RESPONSAVEL_SAUDE_BUCAL
---   rsb2.demo@oris.example       RESPONSAVEL_SAUDE_BUCAL
---   gestor.demo@oris.example     GESTOR
--- Nomes e CNES são fictícios (CNES na faixa 91xxxxx, inexistente no CNES real).
-
 USE oris_db;
 SET NAMES utf8mb4;
--- Limpeza (DDL ALTER TABLE faz commit implícito, por isso fica fora da transação)
 DELETE FROM alteracoes;
 DELETE FROM equipamentos;
 DELETE FROM servicos;
@@ -28,14 +11,12 @@ ALTER TABLE alteracoes AUTO_INCREMENT = 1;
 
 START TRANSACTION;
 
--- Usuários de demonstração
 INSERT IGNORE INTO usuarios (nome, email, senha_hash, perfil, ativo, created_at, updated_at) VALUES ('Admin Demonstração', 'admin.demo@oris.example', '$2b$12$FyFrwG68GWFHAJzpCHQeY.Wax1Apnodv2crJ760KZ17wUrJlXerrG', 'ADMINISTRADOR', TRUE, '2026-04-07 06:28:00', '2026-04-07 06:28:00');
 INSERT IGNORE INTO usuarios (nome, email, senha_hash, perfil, ativo, created_at, updated_at) VALUES ('Gestão da Informação Demo', 'gi.demo@oris.example', '$2b$12$FyFrwG68GWFHAJzpCHQeY.Wax1Apnodv2crJ760KZ17wUrJlXerrG', 'GESTAO_INFORMACAO', TRUE, '2026-03-13 10:04:00', '2026-03-13 10:04:00');
 INSERT IGNORE INTO usuarios (nome, email, senha_hash, perfil, ativo, created_at, updated_at) VALUES ('Responsável Saúde Bucal Demo', 'rsb.demo@oris.example', '$2b$12$FyFrwG68GWFHAJzpCHQeY.Wax1Apnodv2crJ760KZ17wUrJlXerrG', 'RESPONSAVEL_SAUDE_BUCAL', TRUE, '2026-03-31 02:21:00', '2026-03-31 02:21:00');
 INSERT IGNORE INTO usuarios (nome, email, senha_hash, perfil, ativo, created_at, updated_at) VALUES ('Responsável Saúde Bucal Demo 2', 'rsb2.demo@oris.example', '$2b$12$FyFrwG68GWFHAJzpCHQeY.Wax1Apnodv2crJ760KZ17wUrJlXerrG', 'RESPONSAVEL_SAUDE_BUCAL', TRUE, '2026-03-10 05:10:00', '2026-03-10 05:10:00');
 INSERT IGNORE INTO usuarios (nome, email, senha_hash, perfil, ativo, created_at, updated_at) VALUES ('Gestor Demonstração', 'gestor.demo@oris.example', '$2b$12$FyFrwG68GWFHAJzpCHQeY.Wax1Apnodv2crJ760KZ17wUrJlXerrG', 'GESTOR', TRUE, '2026-03-09 03:07:00', '2026-03-09 03:07:00');
 
--- Unidades
 INSERT INTO unidades (id, nome, cnes, unidade_e_mista, tipo, endereco, bairro, cidade, uf, situacao, created_at, updated_at) VALUES (1, 'USF Alto do Mandu', '9100001', 0, 'Unidade de Saúde da Família', 'Rua Fictícia 12', 'Casa Amarela', 'Recife', 'PE', 'ATIVA', '2026-05-02 02:32:00', '2026-06-01 02:32:00');
 INSERT INTO unidades (id, nome, cnes, unidade_e_mista, tipo, endereco, bairro, cidade, uf, situacao, created_at, updated_at) VALUES (2, 'USF Vila Arraes', '9100002', 0, 'Unidade de Saúde da Família', 'Rua Fictícia 846', 'Várzea', 'Recife', 'PE', 'ATIVA', '2026-04-16 10:53:00', '2026-05-22 10:53:00');
 INSERT INTO unidades (id, nome, cnes, unidade_e_mista, tipo, endereco, bairro, cidade, uf, situacao, created_at, updated_at) VALUES (3, 'USF Córrego do Jenipapo', '9100003', 0, 'Unidade de Saúde da Família', 'Rua Fictícia 922', 'Macaxeira', 'Recife', 'PE', 'ATIVA', '2026-06-21 05:00:00', '2026-10-03 05:00:00');
@@ -69,7 +50,6 @@ INSERT INTO unidades (id, nome, cnes, unidade_e_mista, tipo, endereco, bairro, c
 INSERT INTO unidades (id, nome, cnes, unidade_e_mista, tipo, endereco, bairro, cidade, uf, situacao, created_at, updated_at) VALUES (31, 'USF Vietnã', '9100031', 0, 'Unidade de Saúde da Família', 'Rua Fictícia 104', 'Cordeiro', 'Recife', 'PE', 'ATIVA', '2026-05-12 09:32:00', '2026-05-13 09:32:00');
 INSERT INTO unidades (id, nome, cnes, unidade_e_mista, tipo, endereco, bairro, cidade, uf, situacao, created_at, updated_at) VALUES (32, 'USF Brasilit', '9100032', 0, 'Unidade de Saúde da Família', 'Rua Fictícia 964', 'Várzea', 'Recife', 'PE', 'INATIVA', '2026-07-03 04:23:00', '2026-09-10 04:23:00');
 
--- Serviços
 INSERT INTO servicos (id, unidade_id, nome, situacao, created_at, updated_at) VALUES (1, 1, 'Atenção Básica em Saúde Bucal', 'ATIVO', '2026-08-07 08:53:00', '2026-08-07 08:53:00');
 INSERT INTO servicos (id, unidade_id, nome, situacao, created_at, updated_at) VALUES (2, 2, 'Atenção Básica em Saúde Bucal', 'ATIVO', '2026-07-29 06:51:00', '2026-07-29 06:51:00');
 INSERT INTO servicos (id, unidade_id, nome, situacao, created_at, updated_at) VALUES (3, 3, 'Atenção Básica em Saúde Bucal', 'ATIVO', '2026-06-20 04:16:00', '2026-06-20 04:16:00');
@@ -131,7 +111,6 @@ INSERT INTO servicos (id, unidade_id, nome, situacao, created_at, updated_at) VA
 INSERT INTO servicos (id, unidade_id, nome, situacao, created_at, updated_at) VALUES (59, 32, 'Atenção Básica em Saúde Bucal', 'INATIVO', '2026-05-23 08:25:00', '2026-05-23 08:25:00');
 INSERT INTO servicos (id, unidade_id, nome, situacao, created_at, updated_at) VALUES (60, NULL, 'Escovação supervisionada — ação itinerante em escolas', 'ATIVO', '2026-05-18 07:39:00', '2026-05-18 07:39:00');
 
--- Equipamentos
 INSERT INTO equipamentos (id, unidade_id, servico_id, nome, tipo, situacao, created_at, updated_at) VALUES (1, 1, NULL, 'Cadeira odontológica completa #1', 'Cadeira odontológica', 'ATIVO', '2026-06-06 03:09:00', '2026-06-06 03:09:00');
 INSERT INTO equipamentos (id, unidade_id, servico_id, nome, tipo, situacao, created_at, updated_at) VALUES (2, 1, NULL, 'Fotopolimerizador LED #2', 'Fotopolimerizador', 'ATIVO', '2026-08-14 09:20:00', '2026-08-14 09:20:00');
 INSERT INTO equipamentos (id, unidade_id, servico_id, nome, tipo, situacao, created_at, updated_at) VALUES (3, 2, 2, 'Cadeira odontológica completa #1', 'Cadeira odontológica', 'ATIVO', '2026-07-03 03:16:00', '2026-07-03 03:16:00');
@@ -252,7 +231,6 @@ INSERT INTO equipamentos (id, unidade_id, servico_id, nome, tipo, situacao, crea
 INSERT INTO equipamentos (id, unidade_id, servico_id, nome, tipo, situacao, created_at, updated_at) VALUES (118, NULL, NULL, 'Unidade Odontológica Móvel (van)', 'Unidade móvel', 'ATIVO', '2026-09-30 04:23:00', '2026-09-30 04:23:00');
 INSERT INTO equipamentos (id, unidade_id, servico_id, nome, tipo, situacao, created_at, updated_at) VALUES (119, 8, 25, 'Ultrassom com jato de bicarbonato (importado de planilha)', 'Ultrassom odontológico', 'ATIVO', '2026-08-31 10:46:00', '2026-08-31 10:46:00');
 
--- Alterações (fluxo de aprovação) - usuários referenciados por email
 INSERT INTO alteracoes (usuario_id, tabela, registro_id, operacao, dados_novos, descricao, status, created_at, approved_by, approved_at) VALUES ((SELECT id FROM usuarios WHERE email = 'gi.demo@oris.example'), 'unidades', 29, 'EDITAR', NULL, 'Atualização cadastral: Laboratório Regional de Prótese Dentária', 'APROVADO', '2026-07-25 07:32:00', (SELECT id FROM usuarios WHERE email = 'admin.demo@oris.example'), '2026-07-25 15:32:00');
 INSERT INTO alteracoes (usuario_id, tabela, registro_id, operacao, dados_novos, descricao, status, created_at, approved_by, approved_at) VALUES ((SELECT id FROM usuarios WHERE email = 'rsb2.demo@oris.example'), 'unidades', NULL, 'CRIAR', NULL, 'Cadastro de nova unidade', 'REJEITADO', '2026-08-17 06:08:00', (SELECT id FROM usuarios WHERE email = 'gi.demo@oris.example'), '2026-08-17 11:08:00');
 INSERT INTO alteracoes (usuario_id, tabela, registro_id, operacao, dados_novos, descricao, status, created_at, approved_by, approved_at) VALUES ((SELECT id FROM usuarios WHERE email = 'rsb.demo@oris.example'), 'unidades', 19, 'CRIAR', NULL, 'Cadastro de nova unidade', 'APROVADO', '2026-09-04 06:50:00', (SELECT id FROM usuarios WHERE email = 'gi.demo@oris.example'), '2026-09-05 02:50:00');

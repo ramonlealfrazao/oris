@@ -1,5 +1,3 @@
-"""Testes da FASE 3 - autenticação (login, bcrypt, sessão, logout)."""
-
 import re
 
 import pytest

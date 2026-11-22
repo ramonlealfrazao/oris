@@ -1,10 +1,3 @@
-"""Etapa 06: manutenções (4º CRUD), rotinas do banco, views e dashboard.
-
-Testes offline: não exigem MySQL. A execução real das funções/procedimentos/
-triggers é validada com o banco (ver README, seção Etapa 06); aqui garantimos
-o contrato do código: script SQL, catálogo, validação de parâmetros, RBAC e CSRF.
-"""
-
 import os
 from decimal import Decimal
 
@@ -35,7 +28,6 @@ def app_sqlite():
         db.drop_all()
 
 
-# ---------------------------------------------------------------- script SQL
 def test_script_sql_define_todos_os_objetos_do_catalogo():
     comandos = objetos.ler_comandos()
     texto = "\n".join(comandos)
@@ -55,14 +47,13 @@ def test_cada_create_tem_drop_if_exists_ou_or_replace():
 
 def test_comandos_nao_trazem_o_separador():
     assert all("$$" not in c for c in objetos.ler_comandos())
-    assert len(objetos.ler_comandos()) == 33  # 29 + (DROP+CREATE) x 2 triggers de auditoria
+    assert len(objetos.ler_comandos()) == 33
 
 
 def test_exige_tres_tipos_de_objeto():
     assert len(objetos.FUNCOES) >= 2 and len(objetos.PROCEDIMENTOS) >= 2 and len(objetos.TRIGGERS) >= 2
 
 
-# -------------------------------------------------------------------- catálogo
 def test_todo_procedimento_catalogado_tem_sql_call_parametrizado():
     for nome, cfg in objetos.PROCEDIMENTOS.items():
         assert cfg["sql"].startswith(f"CALL {nome}(")
@@ -80,7 +71,6 @@ def test_views_no_catalogo_de_consultas():
         assert "vw_" in consultas.CONSULTAS_POR_ID[vid]["sql"]
 
 
-# ------------------------------------------------------- validação de parâmetro
 @pytest.mark.parametrize("tipo,bruto,esperado", [
     ("unidade", "7", 7), ("ano", "", None), ("ano", "2026", 2026),
     ("tipo_manutencao", "CORRETIVA", "CORRETIVA"),
@@ -100,7 +90,6 @@ def test_parametros_invalidos(tipo, bruto):
         _ler_parametro({"tipo": tipo}, bruto)
 
 
-# --------------------------------------------------------------- filtros do dash
 def test_filtros_do_dashboard_sanitizam_entrada():
     f = dashboard.ler_filtros({"unidade_situacao": "x'--", "tipo_manutencao": "CORRETIVA",
                                "data_ini": "2026-01-31", "data_fim": "lixo", "unidade_tipo": " UBS "})
@@ -112,7 +101,6 @@ def test_filtros_vazios_viram_none():
     assert set(dashboard.ler_filtros({}).values()) == {None}
 
 
-# ----------------------------------------------------------- rotas (RBAC / CSRF)
 @pytest.mark.parametrize("url", ["/bd/dashboard", "/bd/dashboard/dados", "/bd/rotinas", "/bd/manutencoes"])
 def test_telas_exigem_login(app_sqlite, url):
     resposta = app_sqlite.test_client().get(url)
@@ -140,7 +128,6 @@ def test_rotina_desconhecida_da_404(app_sqlite):
     assert c.post("/bd/rotinas/executar", data={"objeto": "DROP TABLE unidades"}).status_code == 404
 
 
-# ---------------------------------------------- contra o MySQL real (opcional)
 mysql = pytest.mark.skipif(os.getenv("ORIS_TEST_MYSQL") != "1",
                            reason="defina ORIS_TEST_MYSQL=1 para testar contra o MySQL")
 
@@ -197,7 +184,6 @@ def test_dashboard_e_views_respondem(admin_mysql):
         assert c.get(url).status_code == 200
 
 
-# ------------------------------------------- regressão: itens sem unidade (vínculo opcional)
 def test_listas_e_detalhes_aceitam_servico_e_equipamento_sem_unidade(app_sqlite):
     from app.models import Equipamento, Servico, SituacaoAtivoInativo
     with app_sqlite.app_context():

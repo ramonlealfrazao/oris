@@ -1,5 +1,3 @@
-"""Testes da FASE 13A - Design System e identidade visual."""
-
 import pytest
 
 from app import create_app

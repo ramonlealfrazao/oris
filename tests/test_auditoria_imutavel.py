@@ -1,15 +1,3 @@
-"""Auditoria imutável (append-only) imposta pelo banco.
-
-Requisito: o log não pode ser editado nem apagado, e isso precisa valer no
-MySQL e não só pela ausência de rota na aplicação. Os triggers
-trg_auditorias_bu / trg_auditorias_bd (database/etapa05_objetos.sql) barram
-UPDATE e DELETE com SIGNAL; INSERT e SELECT continuam livres.
-
-- Testes estáticos: sempre rodam (sem MySQL).
-- Testes contra o MySQL real: defina ORIS_TEST_MYSQL=1 (usam o .env e fazem
-  ROLLBACK, então não deixam linhas na trilha).
-"""
-
 import os
 import pathlib
 import re
@@ -39,7 +27,6 @@ def test_script_sql_define_trigger_que_barra_o_evento(nome, evento):
 
 
 def test_nenhum_codigo_da_aplicacao_altera_ou_apaga_auditorias():
-    """Guarda: se alguém passar a fazer UPDATE/DELETE/TRUNCATE em auditorias, o teste falha."""
     padrao = re.compile(
         r"(UPDATE\s+auditorias|DELETE\s+FROM\s+auditorias|TRUNCATE\s+(TABLE\s+)?auditorias"
         r"|Auditoria\.query\.(delete|update))",
@@ -75,7 +62,7 @@ def conexao():
         try:
             yield conn
         finally:
-            conn.rollback()  # nada do teste fica na trilha
+            conn.rollback()
             conn.close()
 
 
@@ -123,7 +110,6 @@ def test_delete_e_barrado_pelo_banco(conexao):
 
 @mysql
 def test_triggers_de_situacao_continuam_gravando_na_trilha(conexao):
-    """Os triggers existentes (AFTER UPDATE em unidades) fazem INSERT em auditorias e não podem quebrar."""
     with conexao.cursor() as cur:
         cur.execute("SELECT id, situacao FROM unidades ORDER BY id LIMIT 1")
         unidade = cur.fetchone()
@@ -139,7 +125,6 @@ def test_triggers_de_situacao_continuam_gravando_na_trilha(conexao):
 
 @mysql
 def test_trigger_de_situacao_grava_a_origem_ip(conexao):
-    """A origem (IP) informada na sessao chega a trilha gravada pelo trigger."""
     with conexao.cursor() as cur:
         cur.execute("SELECT id, situacao FROM unidades ORDER BY id LIMIT 1")
         unidade = cur.fetchone()

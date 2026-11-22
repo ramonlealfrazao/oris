@@ -1,5 +1,3 @@
-"""Ponto único de importação dos models do ORIS."""
-
 from app.models.enums import (
     OrigemDiretorio,
     PerfilUsuario,
@@ -16,7 +14,6 @@ from app.models.unidade import Unidade
 from app.models.servico import Servico
 from app.models.equipamento import Equipamento
 from app.models.alteracao import Alteracao
-from app.models.manutencao import Manutencao
 from app.models.manutencao import Manutencao
 from app.models.auditoria import Auditoria
 from app.models.solicitacao_titular import SolicitacaoTitular

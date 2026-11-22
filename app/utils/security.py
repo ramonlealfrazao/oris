@@ -1,10 +1,7 @@
-"""Funções de segurança relacionadas à senha do usuário."""
-
 import bcrypt
 
 
 def gerar_hash_senha(senha: str) -> str:
-    """Gera o hash bcrypt de uma senha em texto puro."""
     if not senha:
         raise ValueError("A senha não pode ser vazia.")
 
@@ -14,7 +11,6 @@ def gerar_hash_senha(senha: str) -> str:
 
 
 def verificar_senha(senha: str, senha_hash: str) -> bool:
-    """Verifica se `senha` (texto puro, digitada no login) corresponde ao `senha_hash`..."""
     if not senha or not senha_hash:
         return False
 

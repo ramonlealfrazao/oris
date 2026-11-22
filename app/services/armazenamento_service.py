@@ -1,25 +1,3 @@
-"""
-Exportação de relatórios para armazenamento em nuvem — Amazon S3
-(Requisito 4).
-
-AUTENTICAÇÃO: nenhuma credencial fica no código nem no .env do ORIS. O
-boto3 resolve as credenciais pela cadeia padrão da AWS (variáveis de
-ambiente AWS_*, perfil em ~/.aws ou IAM Role da instância). As
-requisições são assinadas com AWS Signature V4 pelo próprio boto3.
-
-PROTEÇÕES:
-- criptografia em repouso (SSE-S3, AES256) em todo objeto enviado;
-- integridade: o envio leva o SHA-256 do conteúdo (ChecksumSHA256) e o S3
-  recusa o objeto se ele chegar diferente; o hash também vai como metadado;
-- a chave do objeto é montada só com valores controlados pelo sistema
-  (prefixo de configuração + entidade da lista fixa + data + UUID) —
-  nenhum texto vindo do usuário entra no caminho;
-- o download é por URL pré-assinada de curta duração (padrão 15 min),
-  sem tornar o bucket público;
-- erros do provedor são registrados em log e nunca repassados ao
-  usuário (podem conter nomes de bucket/contas).
-"""
-
 import uuid
 
 from flask import current_app
@@ -29,7 +7,7 @@ from app.utils.integridade import sha256_base64, sha256_hex
 
 
 class ArmazenamentoError(Exception):
-    """Falha ao falar com o armazenamento em nuvem."""
+    pass
 
 
 def s3_configurado(config=None):
@@ -57,8 +35,6 @@ def montar_chave(entidade, config=None):
 
 
 def enviar_relatorio(conteudo, entidade, cliente=None, config=None):
-    """Envia o CSV ao bucket e devolve a chave do objeto. `cliente`
-    permite injetar um cliente S3 (testes usam um falso)."""
     config = config if config is not None else current_app.config
     if not s3_configurado(config):
         raise ArmazenamentoError("S3_BUCKET não configurado.")
@@ -83,7 +59,6 @@ def enviar_relatorio(conteudo, entidade, cliente=None, config=None):
 
 
 def gerar_url_download(chave, cliente=None, config=None):
-    """URL pré-assinada (GET) de curta duração para o objeto."""
     config = config if config is not None else current_app.config
     try:
         cliente = cliente or _criar_cliente(config)

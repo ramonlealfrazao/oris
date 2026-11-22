@@ -1,5 +1,3 @@
-"""Sem permissao para criar funcoes/triggers (erro 1419), a migracao NAO pode apagar os existentes."""
-
 from app.bd import objetos
 
 
@@ -40,10 +38,10 @@ def test_sem_permissao_nao_apaga_funcoes_nem_triggers():
     con = ConexaoFalsa(pode=False)
     aplicados, ignorados = objetos.aplicar_objetos(con)
     executados = _ddl(con.cur)
-    assert not any(objetos._e_funcao_ou_trigger(s) for s in executados)  # nenhum DROP/CREATE deles
-    assert any("PROCEDURE" in s.split("(")[0].upper() for s in executados)  # procedures seguem
-    assert any("VIEW" in s.split("(")[0].upper() for s in executados)  # views seguem
-    assert len(ignorados) == 3 + 8  # 3 funcoes e 8 triggers informados ao usuario
+    assert not any(objetos._e_funcao_ou_trigger(s) for s in executados)
+    assert any("PROCEDURE" in s.split("(")[0].upper() for s in executados)
+    assert any("VIEW" in s.split("(")[0].upper() for s in executados)
+    assert len(ignorados) == 3 + 8
 
 
 def test_com_permissao_recria_tudo():

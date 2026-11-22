@@ -1,5 +1,3 @@
-"""Testes da FASE 8 - auditoria e rastreabilidade."""
-
 import pytest
 
 from app import create_app
@@ -272,11 +270,11 @@ def test_auditoria_registra_usuario_data_acao_entidade_registro_corretos(client,
 
     with app.app_context():
         registro = Auditoria.query.filter_by(acao="SOLICITAR_ALTERACAO").first()
-        assert registro.usuario_id == admin.id  # 11. usuário correto
-        assert registro.data_hora is not None  # 12. data/hora
-        assert registro.acao == "SOLICITAR_ALTERACAO"  # 13. ação correta
-        assert registro.tabela == "unidades"  # 14. entidade correta
-        assert registro.registro_id == unidade_id  # 15. registro correto
+        assert registro.usuario_id == admin.id
+        assert registro.data_hora is not None
+        assert registro.acao == "SOLICITAR_ALTERACAO"
+        assert registro.tabela == "unidades"
+        assert registro.registro_id == unidade_id
 
 
 def test_edicao_registra_valor_anterior_e_novo(client, app):
@@ -310,7 +308,7 @@ def test_senha_nao_aparece_na_auditoria(client, app):
             )
             assert SENHA not in texto_completo
             assert "senha_hash" not in texto_completo
-            assert "$2b$" not in texto_completo  # assinatura de hash bcrypt
+            assert "$2b$" not in texto_completo
 
 
 def test_usuario_nao_autorizado_nao_acessa_auditoria(client):
@@ -326,7 +324,7 @@ def test_gestor_nao_acessa_auditoria(client):
 
 
 def test_gestao_informacao_consulta_auditoria(client, app):
-    _login(client, PerfilUsuario.ADMINISTRADOR)  # gera ao menos 1 registro (LOGIN)
+    _login(client, PerfilUsuario.ADMINISTRADOR)
 
     client2 = app.test_client()
     _login(client2, PerfilUsuario.GESTAO_INFORMACAO)

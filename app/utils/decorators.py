@@ -1,5 +1,3 @@
-"""Decorators de controle de acesso."""
-
 from functools import wraps
 
 from flask import abort, redirect, session, url_for
@@ -8,12 +6,10 @@ from app.extensions import db
 
 
 def _sessao_autenticada() -> bool:
-    """Verifica os dois indicadores mínimos de sessão autenticada, definidos no login..."""
     return bool(session.get("autenticado") and session.get("usuario_id"))
 
 
 def usuario_atual():
-    """Retorna o objeto Usuario correspondente à sessão atual, ou None se não houver..."""
     from app.models import Usuario
 
     if not _sessao_autenticada():
@@ -23,8 +19,6 @@ def usuario_atual():
 
 
 def login_required(view_func):
-    """Garante que a rota só seja acessada por um usuário autenticado E ainda ativo."""
-
     @wraps(view_func)
     def wrapper(*args, **kwargs):
         if not _sessao_autenticada():
@@ -41,8 +35,6 @@ def login_required(view_func):
 
 
 def roles_required(*perfis_permitidos):
-    """Restringe o acesso à rota a usuários autenticados cujo perfil esteja entre..."""
-
     perfis_permitidos_set = {str(p) for p in perfis_permitidos}
 
     def decorator(view_func):

@@ -1,5 +1,3 @@
-"""Testes dos direitos do titular (LGPD, art. 18) e da página de privacidade."""
-
 import json
 from datetime import timedelta
 

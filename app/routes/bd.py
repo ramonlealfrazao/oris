@@ -1,5 +1,3 @@
-"""Módulo "Banco de Dados" — Etapa 03 (interface funcional com dashboard)."""
-
 import os
 from decimal import Decimal, InvalidOperation
 
@@ -109,7 +107,7 @@ def index():
     try:
         for nome, cfg in ENTIDADES.items():
             totais[nome] = len(cfg["dao"].listar())
-    except Exception:  # banco indisponível → página continua abrindo
+    except Exception:
         current_app.logger.exception("Falha ao consultar o banco no hub /bd")
         erro = "Não foi possível conectar ao MySQL. Verifique o .env e se o serviço está ativo."
     return render_template(
@@ -143,9 +141,6 @@ def executar_consulta(consulta_id):
     )
 
 
-# --------------------------------------------------------------------------
-# Dashboard integrado (Etapa 06)
-# --------------------------------------------------------------------------
 @bd_bp.route("/dashboard")
 @login_required
 def dashboard_integrado():
@@ -169,11 +164,7 @@ def dashboard_dados():
         return jsonify({"erro": "Não foi possível carregar os dados do banco."}), 500
 
 
-# --------------------------------------------------------------------------
-# Funções, procedimentos e triggers (Etapas 05/06)
-# --------------------------------------------------------------------------
 def _ler_parametro(p, bruto):
-    """Valida UM parâmetro de rotina; devolve o valor ou levanta ValueError."""
     tipo, bruto = p["tipo"], (bruto or "").strip()
     if tipo in ("unidade", "equipamento", "manutencao_aberta"):
         valor = int(bruto)
@@ -235,7 +226,7 @@ def rotinas():
 @bd_bp.route("/rotinas/executar", methods=["POST"])
 @login_required
 def rotinas_executar():
-    if not ExcluirForm().validate_on_submit():  # só valida o token CSRF
+    if not ExcluirForm().validate_on_submit():
         abort(400)
     nome = request.form.get("objeto", "")
     catalogo = objetos.FUNCOES.get(nome) or objetos.PROCEDIMENTOS.get(nome)

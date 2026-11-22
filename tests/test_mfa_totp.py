@@ -1,5 +1,3 @@
-"""MFA (TOTP) obrigatório no login local, para todos os perfis."""
-
 import json
 import time
 
@@ -78,7 +76,6 @@ def _senha(client, email):
 
 
 def _cadastrar(client, app, email):
-    """Faz o primeiro login completo (senha + cadastro do TOTP); devolve o segredo e os códigos."""
     _senha(client, email)
     client.get("/login/mfa/cadastrar")
     segredo = _segredo(app, email)
@@ -95,16 +92,12 @@ def _sair(client):
     client.get("/logout")
 
 
-# --------------------------------------------------------------------------
-# Obrigatoriedade para todos os perfis
-# --------------------------------------------------------------------------
 @pytest.mark.parametrize("indice", range(len(PerfilUsuario)))
 def test_senha_correta_nao_abre_sessao_e_exige_cadastro_para_todo_perfil(client, indice):
     resp = _senha(client, f"u{indice}@oris.com.br")
     assert resp.status_code == 302
     assert resp.headers["Location"].endswith("/login/mfa/cadastrar")
     assert not _logado(client)
-    # Rotas protegidas continuam fechadas enquanto o segundo fator não for feito.
     assert client.get("/").status_code == 302
     assert client.get("/unidades").headers["Location"].endswith("/login")
 
@@ -117,10 +110,9 @@ def test_cadastro_mostra_qr_e_chave_e_guarda_segredo_cifrado(client, app):
     assert "<svg" in texto
     u = _usuario(app, "u0@oris.com.br")
     assert u.mfa_ativo is False
-    assert u.mfa_segredo.startswith("oris-fernet-v1:")  # nunca em texto puro no banco
+    assert u.mfa_segredo.startswith("oris-fernet-v1:")
     segredo = _segredo(app, "u0@oris.com.br")
     assert mfa_service.formatar_segredo(segredo) in texto
-    # Recarregar não troca o segredo (o QR já lido continua valendo).
     client.get("/login/mfa/cadastrar")
     assert _segredo(app, "u0@oris.com.br") == segredo
 
@@ -148,16 +140,12 @@ def test_cadastro_com_codigo_errado_nao_ativa(client, app):
         assert Auditoria.query.filter_by(acao="MFA_FALHA").count() == 1
 
 
-# --------------------------------------------------------------------------
-# Logins seguintes
-# --------------------------------------------------------------------------
 def test_login_seguinte_pede_codigo_e_aceita_o_certo(client, app):
     segredo, _ = _cadastrar(client, app, "u2@oris.com.br")
     _sair(client)
     resp = _senha(client, "u2@oris.com.br")
     assert resp.headers["Location"].endswith("/login/mfa")
     assert not _logado(client)
-    # Aguarda o próximo intervalo: o código do cadastro já foi consumido.
     proximo = pyotp.TOTP(segredo).at(time.time() + 30)
     resp = client.post("/login/mfa", data={"codigo": proximo})
     assert resp.status_code == 302 and resp.headers["Location"].endswith("/")
@@ -231,13 +219,10 @@ def test_conta_de_diretorio_nunca_chega_ao_mfa_local(client, app):
         u.origem = OrigemDiretorio.OIDC
         db.session.commit()
     resp = _senha(client, "u1@oris.com.br")
-    assert resp.status_code == 200  # senha local recusada, como antes
+    assert resp.status_code == 200
     assert not _logado(client)
 
 
-# --------------------------------------------------------------------------
-# Limite de tentativas na etapa do código
-# --------------------------------------------------------------------------
 def test_muitos_codigos_errados_bloqueiam_a_etapa():
     app = _criar_app(ConfigMfaRateLimit)
     client = app.test_client()
@@ -260,13 +245,10 @@ def test_muitos_codigos_errados_bloqueiam_a_etapa():
             db.drop_all()
 
 
-# --------------------------------------------------------------------------
-# Redefinição pelo administrador
-# --------------------------------------------------------------------------
 def test_admin_redefine_mfa_de_quem_perdeu_o_celular(client, app):
-    _cadastrar(client, app, "u3@oris.com.br")  # GESTOR
+    _cadastrar(client, app, "u3@oris.com.br")
     _sair(client)
-    _cadastrar(client, app, "u0@oris.com.br")  # ADMINISTRADOR, logado
+    _cadastrar(client, app, "u0@oris.com.br")
     alvo = _usuario(app, "u3@oris.com.br")
     resp = client.post(f"/usuarios/{alvo.id}/mfa/redefinir")
     assert resp.status_code == 302
@@ -281,7 +263,7 @@ def test_admin_redefine_mfa_de_quem_perdeu_o_celular(client, app):
 def test_quem_nao_e_admin_nao_redefine_mfa(client, app):
     _cadastrar(client, app, "u0@oris.com.br")
     _sair(client)
-    _cadastrar(client, app, "u3@oris.com.br")  # GESTOR logado
+    _cadastrar(client, app, "u3@oris.com.br")
     alvo = _usuario(app, "u0@oris.com.br")
     assert client.post(f"/usuarios/{alvo.id}/mfa/redefinir").status_code == 403
     assert _usuario(app, "u0@oris.com.br").mfa_ativo is True
@@ -294,9 +276,6 @@ def test_tela_do_usuario_mostra_situacao_do_mfa(client, app):
     assert "Verificação em dois fatores" in texto and "não cadastrado" in texto
 
 
-# --------------------------------------------------------------------------
-# Serviço
-# --------------------------------------------------------------------------
 def test_tolerancia_de_relogio_de_um_intervalo(app):
     with app.app_context():
         u = db.session.query(Usuario).filter_by(email="u0@oris.com.br").one()
@@ -308,7 +287,7 @@ def test_tolerancia_de_relogio_de_um_intervalo(app):
 
 
 def test_mfa_desligado_pela_configuracao_mantem_login_so_com_senha():
-    app = create_app(TestingConfig)  # MFA_OBRIGATORIO = False
+    app = create_app(TestingConfig)
     with app.app_context():
         db.create_all()
         db.session.add(Usuario(nome="X", email="x@oris.com.br", senha_hash=gerar_hash_senha(SENHA),

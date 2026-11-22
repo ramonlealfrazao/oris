@@ -1,5 +1,3 @@
-"""Testes da FASE 13B - Etapa 1 (estrutura global + Dashboard)."""
-
 import pytest
 
 from app import create_app

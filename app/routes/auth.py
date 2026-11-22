@@ -1,5 +1,3 @@
-"""Rotas de autenticação"""
-
 import secrets
 import time
 
@@ -49,10 +47,6 @@ def login():
 
         usuario = Usuario.query.filter_by(email=email).first()
 
-        # Mensagem sempre genérica: usuário inexistente, senha errada
-        # ou usuário inativo resultam na mesma resposta ao usuário.
-        # Contas provisionadas por LDAP/OIDC nunca autenticam com senha
-        # local: a autenticação é sempre no diretório.
         login_valido = (
             usuario is not None
             and usuario.ativo
@@ -65,8 +59,6 @@ def login():
                 limpar_tentativas(ip, email)
 
             if mfa_service.mfa_obrigatorio():
-                # Senha correta NÃO abre a sessão: só libera a segunda etapa (MFA),
-                # por poucos minutos. A sessão nasce em _abrir_sessao_local().
                 session.clear()
                 session[CHAVE_MFA_PENDENTE] = {"usuario_id": usuario.id, "desde": time.time()}
                 registrar_auditoria(
@@ -85,8 +77,6 @@ def login():
         if rate_limit_ativo:
             registrar_tentativa_falha(ip, email)
 
-        # O motivo real fica so na trilha de auditoria; ao usuario a mensagem e sempre
-        # generica. A senha digitada NUNCA e gravada.
         if usuario is None:
             motivo = "usuário inexistente"
         elif not usuario.ativo:
@@ -105,9 +95,6 @@ def login():
     return render_template("login.html", form=form)
 
 
-# --------------------------------------------------------------------------
-# MFA (TOTP) - segunda etapa do login local
-# --------------------------------------------------------------------------
 CHAVE_MFA_PENDENTE = "mfa_pendente"
 MFA_VALIDADE_SEGUNDOS = 5 * 60
 MENSAGEM_MFA_EXPIRADO = "Sua etapa de verificação expirou. Entre novamente com e-mail e senha."
@@ -124,7 +111,6 @@ def _abrir_sessao_local(usuario, descricao):
 
 
 def _usuario_mfa_pendente():
-    """Usuário que já acertou a senha e está na segunda etapa, ou None (expirou/inválido)."""
     pendente = session.get(CHAVE_MFA_PENDENTE)
     if not isinstance(pendente, dict):
         return None
@@ -139,7 +125,6 @@ def _usuario_mfa_pendente():
 
 
 def _chave_rate_limit_mfa(usuario):
-    # Por usuário (e não por IP): trocar de IP não dá novas tentativas de adivinhar o código.
     return ("mfa", f"usuario:{usuario.id}")
 
 
@@ -285,9 +270,6 @@ def login_oidc_callback():
     try:
         externo = concluir_autorizacao(codigo, estado, _uri_callback_oidc())
         if externo.uid_ldap:
-            # Pessoa do LDAP (federado no Keycloak): é a MESMA conta que a
-            # `flask sincronizar-ldap` cria (origem LDAP, identificador = uid).
-            # Sem isso, quem já foi sincronizado era recusado por "e-mail já em uso".
             externo = UsuarioExterno(
                 identificador=externo.uid_ldap, nome=externo.nome,
                 email=externo.email, grupos=externo.grupos,

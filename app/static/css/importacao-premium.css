@@ -1,24 +1,3 @@
-/*
- * ORIS - Importação "Premium" (redesign visual, pós-13B)
- * ---------------------------------------------------------------
- * Camada de estilo EXCLUSIVA das 5 telas de Importação
- * (index/nova/mapeamento/validacao_erros/previa), carregada só
- * nelas via {% block extra_css %} - não afeta nenhuma outra tela
- * do sistema. Construída inteiramente sobre os tokens já existentes
- * em tokens.css (nenhuma cor nova foi inventada) e sobre os
- * componentes do Design System (.oris-panel, .oris-stat-strip etc.),
- * que continuam funcionando normalmente nas demais telas.
- *
- * Direção: Health-Tech / Gov-Tech premium - glassmorphism sutil,
- * gradiente navy → petróleo → turquesa, profundidade e microinterações
- * discretas. Sem neon, sem glow exagerado, sem efeitos 3D.
- *
- * Todas as classes aqui usam o prefixo "oris-import-" para nunca
- * colidir com o Design System global.
- */
-
-/* ---- Hero da página inicial (index.html) -------------------------- */
-
 .oris-import-hero {
     position: relative;
     overflow: hidden;
@@ -26,13 +5,12 @@
     padding: 2.25rem 2.5rem;
     margin-bottom: 1.75rem;
     background: linear-gradient(135deg, var(--oris-navy) 0%, var(--oris-petroleum) 55%, var(--oris-teal) 100%);
-    background-color: var(--oris-navy); /* fallback sólido sem suporte a gradiente */
+    background-color: var(--oris-navy);
     color: var(--oris-text-on-dark);
     box-shadow: var(--oris-shadow-md);
 }
 
-/* Camada de "vidro" bem sutil por cima do gradiente - glassmorphism
-   discreto, não um efeito chamativo. */
+
 .oris-import-hero::before {
     content: "";
     position: absolute;
@@ -65,8 +43,7 @@
     font-weight: 500;
 }
 
-/* Ícone decorativo discreto (conectividade / saúde) no canto do hero —
-   um SVG simples embutido no template, estilizado aqui. */
+
 .oris-import-hero-icon {
     position: absolute;
     right: 1.75rem;
@@ -82,7 +59,6 @@
     }
 }
 
-/* ---- Cards de entidade (glassmorphism) ------------------------------ */
 
 .oris-import-card {
     position: relative;
@@ -135,7 +111,6 @@
     flex-grow: 1;
 }
 
-/* ---- Área de upload (glass + gradiente na borda) -------------------- */
 
 .oris-import-upload {
     position: relative;
@@ -171,7 +146,6 @@
     margin: 0.75rem auto 0;
 }
 
-/* ---- Painéis em "vidro" (mapeamento / prévia / validação) ------------ */
 
 .oris-import-panel {
     border-radius: var(--oris-radius-lg);
@@ -183,7 +157,6 @@
     padding: 1.5rem 1.65rem;
 }
 
-/* ---- Indicadores (stat strip) com toque premium ---------------------- */
 
 .oris-import-stat-strip {
     display: grid;
@@ -233,7 +206,6 @@
     font-weight: 600;
 }
 
-/* ---- Mapeamento: chip de conexão coluna -> campo ---------------------- */
 
 .oris-import-map-row {
     display: flex;
@@ -277,7 +249,6 @@
     min-width: 200px;
 }
 
-/* ---- Classificação (prévia) com leve gradiente por status ------------- */
 
 .oris-import-badge-novo {
     background: linear-gradient(120deg, var(--oris-success), #2f9e63);
@@ -294,7 +265,6 @@
     color: var(--oris-white);
 }
 
-/* ---- Responsividade -------------------------------------------------- */
 
 @media (max-width: 575.98px) {
     .oris-import-hero {

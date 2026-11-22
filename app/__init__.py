@@ -1,5 +1,3 @@
-"""Application factory do ORIS."""
-
 import io
 
 from flask import Flask, Request, render_template
@@ -12,19 +10,15 @@ from config import SECRET_KEY_PADRAO, get_config
 
 class _UploadEmMemoriaRequest(Request):
     def _get_file_stream(self, total_content_length, content_type, filename=None, content_length=None):
-        """Avoid Werkzeug spooling plaintext uploads to disk before route handling."""
         return io.BytesIO()
 
 
 def create_app(config_object=None):
-    """Cria e configura a instância da aplicação Flask."""
     app = Flask(__name__)
     app.request_class = _UploadEmMemoriaRequest
 
     app.config.from_object(config_object or get_config())
 
-    # Fail-fast: em produção, assinar sessões/CSRF com a chave padrão (pública no
-    # repositório) permitiria forjar cookies de sessão de qualquer perfil.
     if not app.config.get("DEBUG") and not app.config.get("TESTING"):
         if app.config.get("SECRET_KEY") in (None, "", SECRET_KEY_PADRAO):
             raise RuntimeError(
@@ -37,7 +31,7 @@ def create_app(config_object=None):
 
     app.json.ensure_ascii = False
 
-    app.config.setdefault("MAX_CONTENT_LENGTH", 10 * 1024 * 1024)  # 10 MB
+    app.config.setdefault("MAX_CONTENT_LENGTH", 10 * 1024 * 1024)
 
     n_proxies = int(app.config.get("TRUSTED_PROXY_COUNT") or 0)
     if n_proxies > 0:

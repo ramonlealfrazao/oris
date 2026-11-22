@@ -1,28 +1,8 @@
 #!/usr/bin/env python3
-"""ORIS - instala e liga o projeto com UM comando (Windows, Linux e Mac).
-
-Uso (na pasta do projeto):
-    python iniciar.py              # instala tudo (se preciso) e liga o ORIS
-    python iniciar.py --sem-seed   # nao pergunta/carrega os dados de demonstracao
-    python iniciar.py --so-preparar  # prepara tudo mas nao sobe o servidor
-
-Pre-requisitos: Python 3.10+ e MySQL Server 8.x instalado e LIGADO.
-O script e seguro de repetir: so faz o que ainda nao foi feito.
-
-O que faz, na ordem:
-  1. Cria o ambiente virtual (venv) e instala o requirements.txt
-  2. Cria o .env (com SECRET_KEY e senha do banco gerados na hora)
-  3. Cria o banco oris_db e o usuario oris_user no MySQL (pede a senha do root,
-     so na primeira vez; ela NAO e gravada em lugar nenhum)
-  4. Cria as tabelas, funcoes, procedures, triggers e views
-  5. (opcional) Carrega os dados de demonstracao e os usuarios de teste
-  6. Sobe o servidor em http://127.0.0.1:5000
-"""
 
 import getpass
 import os
 import secrets
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -60,10 +40,6 @@ def perguntar_sn(pergunta, padrao=True):
     return resposta.startswith("s")
 
 
-# --------------------------------------------------------------------------
-# Etapa 1 (roda no Python do sistema): venv + dependencias, depois re-executa
-# este mesmo arquivo dentro do venv.
-# --------------------------------------------------------------------------
 def etapa_1(argumentos):
     if sys.version_info < (3, 10):
         falhar(f"Python 3.10+ necessario (voce tem {sys.version.split()[0]}).")
@@ -85,9 +61,6 @@ def etapa_1(argumentos):
     sys.exit(subprocess.call([str(PY_VENV), str(Path(__file__).resolve()), "--etapa-2", *argumentos]))
 
 
-# --------------------------------------------------------------------------
-# Etapa 2 (roda dentro do venv)
-# --------------------------------------------------------------------------
 def ler_env():
     valores = {}
     arquivo = RAIZ / ".env"
@@ -117,11 +90,6 @@ def chave_fernet_valida(valor):
 
 
 def garantir_chave_de_dados(destino):
-    """Completa um .env antigo com DATA_ENCRYPTION_KEY (exigida desde a criptografia de dados).
-
-    So gera chave quando ela FALTA ou e invalida (nesse caso o ORIS nem iniciava, entao nao
-    ha dado cifrado com ela). Uma chave valida nunca e trocada: perde-la impede ler os dados.
-    """
     atual = ler_env().get("DATA_ENCRYPTION_KEY", "")
     if atual and chave_fernet_valida(atual):
         return
@@ -134,7 +102,6 @@ def garantir_chave_de_dados(destino):
 
 
 def criar_env():
-    """Cria o .env a partir do exemplo, com SECRET_KEY e senha do banco novas."""
     passo("Conferindo o arquivo .env...")
     destino = RAIZ / ".env"
     if destino.exists():
@@ -216,7 +183,6 @@ def preparar_banco():
         cur.execute(f"ALTER USER '{USUARIO_BD}'@'localhost' IDENTIFIED BY %s", (senha_app,))
         cur.execute(f"GRANT ALL PRIVILEGES ON `{BANCO}`.* TO '{USUARIO_BD}'@'localhost'")
         cur.execute("FLUSH PRIVILEGES")
-        # Funcoes/triggers precisam disto quando o log binario esta ligado (padrao do MySQL 8).
         try:
             cur.execute("SELECT @@global.log_bin_trust_function_creators")
             if cur.fetchone()[0] != 1:

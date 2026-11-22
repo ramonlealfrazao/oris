@@ -1,5 +1,3 @@
-"""Testes da área de Governança (ISO 38500, riscos, RACI, COBIT, auditoria, ética, nuvem)."""
-
 import pytest
 
 from app import create_app

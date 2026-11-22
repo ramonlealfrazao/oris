@@ -1,5 +1,3 @@
-"""Testes da FASE 1 - estrutura inicial do projeto."""
-
 from app import create_app
 from config import TestingConfig
 

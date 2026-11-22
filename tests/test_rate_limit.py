@@ -1,5 +1,3 @@
-"""Testes unitários do rate limiting de login (SEC-005)."""
-
 import pytest
 
 from app.utils import rate_limit

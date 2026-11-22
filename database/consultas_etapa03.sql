@@ -1,39 +1,6 @@
--- ORIS - Plataforma de Governança da Rede de Saúde Bucal
--- ETAPA 03 - SQL das consultas (e dos comandos de manipulação)
---
--- SGBD: MySQL 8.0+ (compatível com MariaDB 10.3+)
--- Arquivo GERADO por scripts/gerar_sql_consultas.py a partir do
--- código da aplicação (app/bd/consultas.py e app/bd/dao_*.py):
--- é exatamente o SQL que o backend envia ao banco via PyMySQL
--- (DB-API 2.0, equivalente ao JDBC). Na aplicação, os valores vão
--- como parâmetros do driver (%s / %(nome)s ≈ '?' do PreparedStatement);
--- aqui foram trocados por valores de exemplo para execução direta.
---
--- Para popular o banco com dados de demonstração antes de rodar:
---   mysql -u <usuario> -p < database/seed_etapa03.sql
-
 USE oris_db;
 
--- ##################################################################
--- PARTE 1 - CONSULTAS DA ETAPA 03 (7 consultas)
--- ##################################################################
 
--- C1 - Capacidade instalada por unidade
--- Pergunta:
--- Quantos serviços e equipamentos ativos cada unidade possui, e
--- qual o percentual do seu parque de equipamentos que está
--- operante?
---
--- Nível: Intermediária
--- Recursos de SQL:
---   - JOIN (LEFT JOIN em 3 tabelas)
---   - GROUP BY
---   - COUNT(DISTINCT CASE …) - agregação condicional
---   - NULLIF para evitar divisão por zero
---   - Filtro parametrizado
---
--- Parâmetros (valor de exemplo usado abaixo):
---   - situacao = 'ATIVA'  (Situação da unidade)
 SELECT u.id,
        u.nome      AS unidade,
        u.bairro,
@@ -50,22 +17,6 @@ SELECT u.id,
  GROUP BY u.id, u.nome, u.bairro, u.situacao
  ORDER BY equip_ativos DESC, u.nome;
 
--- C2 - Cobertura da rede por bairro
--- Pergunta:
--- Em cada bairro, quantas unidades existem, quantas estão ativas e
--- qual a média de equipamentos ativos por unidade?
---
--- Nível: Intermediária/Avançada
--- Recursos de SQL:
---   - Tabela derivada (subconsulta no FROM)
---   - LEFT JOIN
---   - SUM de expressão booleana
---   - AVG
---   - GROUP BY + HAVING parametrizado
---   - COALESCE
---
--- Parâmetros (valor de exemplo usado abaixo):
---   - minimo = 2  (Mínimo de unidades no bairro)
 SELECT COALESCE(u.bairro, '(sem bairro)')                      AS bairro,
        COUNT(*)                                                AS unidades,
        SUM(u.situacao = 'ATIVA')                               AS ativas,
@@ -82,17 +33,6 @@ SELECT COALESCE(u.bairro, '(sem bairro)')                      AS bairro,
 HAVING COUNT(*) >= 2
  ORDER BY unidades DESC, bairro;
 
--- C3 - Unidades ativas sem nenhum equipamento operante
--- Pergunta:
--- Quais unidades estão ATIVAS mas não têm nenhum equipamento ativo
--- (lacuna de capacidade que exige ação da gestão)?
---
--- Nível: Avançada
--- Recursos de SQL:
---   - NOT EXISTS (anti-junção)
---   - Subconsulta correlacionada escalar
---   - DATEDIFF
---   - UTC_TIMESTAMP()
 SELECT u.id,
        u.nome,
        u.cnes,
@@ -110,18 +50,6 @@ SELECT u.id,
                       AND e.situacao = 'ATIVO')
  ORDER BY servicos_ativos DESC, u.nome;
 
--- C4 - Ranking de bairros por equipamentos (curva de Pareto)
--- Pergunta:
--- Quais bairros concentram os equipamentos ativos da rede, qual a
--- participação de cada um e a participação acumulada?
---
--- Nível: Avançada
--- Recursos de SQL:
---   - CTE (WITH)
---   - INNER JOIN
---   - RANK() OVER
---   - SUM() OVER () - total sem GROUP BY
---   - SUM() OVER (ORDER BY … ROWS …) - soma acumulada
 WITH equip_bairro AS (
     SELECT COALESCE(u.bairro, '(sem bairro)') AS bairro,
            COUNT(e.id)                        AS qtd
@@ -140,22 +68,6 @@ SELECT RANK() OVER (ORDER BY qtd DESC)                         AS posicao,
   FROM equip_bairro
  ORDER BY posicao, bairro;
 
--- C5 - Desempenho do fluxo de aprovação por solicitante
--- Pergunta:
--- Nos últimos N dias, quantas alterações cada usuário solicitou,
--- qual a taxa de aprovação, quanto tempo a decisão levou e quem
--- revisou?
---
--- Nível: Avançada
--- Recursos de SQL:
---   - Auto-relacionamento: JOIN duplo com a mesma tabela (usuarios)
---   - INNER + LEFT JOIN
---   - TIMESTAMPDIFF
---   - GROUP_CONCAT(DISTINCT …)
---   - INTERVAL parametrizado
---
--- Parâmetros (valor de exemplo usado abaixo):
---   - dias = 90  (Período (últimos N dias))
 SELECT sol.nome                                                  AS solicitante,
        sol.perfil,
        COUNT(*)                                                  AS total,
@@ -175,17 +87,6 @@ SELECT sol.nome                                                  AS solicitante,
  GROUP BY sol.id, sol.nome, sol.perfil
  ORDER BY total DESC, solicitante;
 
--- C6 - CNES compartilhado por mais de uma unidade
--- Pergunta:
--- Quais códigos CNES aparecem em mais de um registro de unidade e,
--- nesses casos, todas estão corretamente marcadas como 'unidade
--- mista'?
---
--- Nível: Intermediária
--- Recursos de SQL:
---   - GROUP BY + HAVING COUNT(*) > 1 (detecção de duplicidade)
---   - GROUP_CONCAT ordenado
---   - CASE para diagnóstico
 SELECT u.cnes,
        COUNT(*)                                              AS registros,
        GROUP_CONCAT(u.nome ORDER BY u.nome SEPARATOR ' | ')  AS unidades,
@@ -198,18 +99,6 @@ SELECT u.cnes,
 HAVING COUNT(*) > 1
  ORDER BY registros DESC, u.cnes;
 
--- C7 - Equipamentos vinculados a serviço de outra unidade
--- Pergunta:
--- Existe algum equipamento cujo serviço associado pertence a uma
--- unidade diferente da unidade do próprio equipamento
--- (inconsistência herdada de planilhas)?
---
--- Nível: Avançada
--- Recursos de SQL:
---   - JOIN em 4 instâncias (unidades usada 2x)
---   - Operador null-safe <=>
---   - NOT na condição de junção
---   - Auditoria de integridade de negócio
 SELECT e.id,
        e.nome   AS equipamento,
        ue.nome  AS unidade_do_equipamento,
@@ -222,68 +111,48 @@ SELECT e.id,
  WHERE NOT (e.unidade_id <=> s.unidade_id)
  ORDER BY e.nome;
 
--- ##################################################################
--- PARTE 2 - COMANDOS DE INSERÇÃO / ALTERAÇÃO / EXCLUSÃO
--- (executados pela interface, telas /bd/unidades, /bd/servicos,
---  /bd/equipamentos). Valores ilustrativos. Toda escrita grava também
--- um registro em `auditorias` NA MESMA TRANSAÇÃO.
--- ##################################################################
 
 START TRANSACTION;
 
--- UNIDADES - INSERT
 INSERT INTO unidades
         (nome, cnes, unidade_e_mista, tipo, endereco, bairro, cidade, uf,
          situacao, created_at, updated_at)
     VALUES
         ('USF Exemplo Etapa 03', '9199999', 0, 'Unidade de Saúde da Família', 'Rua Exemplo 100', 'Várzea', 'Recife', 'PE', 'ATIVA', UTC_TIMESTAMP(), UTC_TIMESTAMP());
 
-SET @id_unidade = LAST_INSERT_ID();  -- ≈ cursor.lastrowid
+SET @id_unidade = LAST_INSERT_ID();
 
--- UNIDADES - UPDATE
 UPDATE unidades
        SET nome = 'USF Exemplo Etapa 03', cnes = '9199999', unidade_e_mista = 0, tipo = 'Unidade de Saúde da Família',
            endereco = 'Rua Exemplo 100', bairro = 'Várzea', cidade = 'Recife', uf = 'PE',
            situacao = 'MANUTENCAO', updated_at = UTC_TIMESTAMP()
      WHERE id = @id_unidade;
 
--- SERVIÇOS - INSERT
 INSERT INTO servicos (nome, unidade_id, situacao, created_at, updated_at)
     VALUES ('Atenção Básica em Saúde Bucal', @id_unidade, 'ATIVO', UTC_TIMESTAMP(), UTC_TIMESTAMP());
 
-SET @id_servico = LAST_INSERT_ID();  -- ≈ cursor.lastrowid
+SET @id_servico = LAST_INSERT_ID();
 
--- SERVIÇOS - UPDATE
 UPDATE servicos
        SET nome = 'Atenção Básica em Saúde Bucal', unidade_id = @id_unidade, situacao = 'INATIVO', updated_at = UTC_TIMESTAMP()
      WHERE id = @id_servico;
 
--- EQUIPAMENTOS - INSERT
 INSERT INTO equipamentos
         (nome, tipo, unidade_id, servico_id, situacao, created_at, updated_at)
     VALUES ('Autoclave 21 L #1', 'Autoclave', @id_unidade, @id_servico, 'ATIVO', UTC_TIMESTAMP(), UTC_TIMESTAMP());
 
-SET @id_equip = LAST_INSERT_ID();  -- ≈ cursor.lastrowid
+SET @id_equip = LAST_INSERT_ID();
 
--- EQUIPAMENTOS - UPDATE
 UPDATE equipamentos
        SET nome = 'Autoclave 21 L #1', tipo = 'Autoclave', unidade_id = @id_unidade, servico_id = @id_servico,
            situacao = 'INATIVO', updated_at = UTC_TIMESTAMP()
      WHERE id = @id_equip;
 
--- EQUIPAMENTOS - DELETE
 DELETE FROM equipamentos WHERE id = @id_equip;
 
--- SERVIÇOS - DELETE (só sem equipamentos vinculados)
 DELETE FROM servicos WHERE id = @id_servico;
 
--- UNIDADES - DELETE (só sem serviços/equipamentos vinculados)
 DELETE FROM unidades WHERE id = @id_unidade;
 
--- Registro de auditoria gravado junto com cada comando acima:
--- INSERT INTO auditorias (usuario_id, acao, tabela, registro_id, descricao,
---                         valor_anterior, valor_novo, data_hora)
--- VALUES (%s, 'BD_INSERIR' | 'BD_ALTERAR' | 'BD_EXCLUIR', %s, %s, %s, %s, %s, UTC_TIMESTAMP());
 
--- Exemplo didático: desfaz tudo o que foi feito na Parte 2.
 ROLLBACK;

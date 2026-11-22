@@ -1,5 +1,3 @@
-"""Model Unidade."""
-
 from app.extensions import db
 from app.models.enums import SituacaoUnidade
 from app.models.mixins import TimestampMixin

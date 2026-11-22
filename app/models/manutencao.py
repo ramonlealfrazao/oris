@@ -1,9 +1,3 @@
-"""Model Manutencao (Etapa 06): histórico de manutenção dos equipamentos.
-
-Os triggers do MySQL (database/etapa05_objetos.sql) validam os dados e
-mantêm a situação do equipamento coerente com as manutenções abertas.
-"""
-
 from app.extensions import db
 from app.models.mixins import TimestampMixin
 

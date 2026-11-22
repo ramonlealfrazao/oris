@@ -1,5 +1,3 @@
-"""Gera database/seed_etapa03.sql - massa de dados FICTÍCIA para demonstrar a Etapa 03..."""
-
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -7,7 +5,7 @@ from pathlib import Path
 random.seed(2026)
 
 SAIDA = Path(__file__).resolve().parent.parent / "database" / "seed_etapa03.sql"
-HASH_DEMO = "$2b$12$FyFrwG68GWFHAJzpCHQeY.Wax1Apnodv2crJ760KZ17wUrJlXerrG"  # Oris@2026
+HASH_DEMO = "$2b$12$FyFrwG68GWFHAJzpCHQeY.Wax1Apnodv2crJ760KZ17wUrJlXerrG"
 AGORA = datetime(2026, 10, 31, 12, 0, 0)
 
 USUARIOS = [

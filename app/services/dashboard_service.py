@@ -1,5 +1,3 @@
-"""Serviço central de dados do dashboard (Fase 9)."""
-
 from app.models import (
     Alteracao,
     Auditoria,
@@ -16,7 +14,6 @@ QUANTIDADE_ATIVIDADES_RECENTES_EXIBIDAS = 15
 
 
 def obter_indicadores():
-    """Contagens gerais de Unidades, Serviços, Equipamentos e Alterações, calculadas..."""
     return {
         "unidades_total": Unidade.query.count(),
         "unidades_ativas": Unidade.query.filter_by(situacao=SituacaoUnidade.ATIVA).count(),
@@ -39,7 +36,6 @@ def obter_indicadores():
 
 
 def obter_resumo_unidades(situacao_filtro=None):
-    """Lista de unidades (nome, CNES, cidade, UF, situação) para a     seção "Resumo da..."""
     query = Unidade.query
     if situacao_filtro in {item.value for item in SituacaoUnidade}:
         query = query.filter_by(situacao=SituacaoUnidade(situacao_filtro))
@@ -47,7 +43,6 @@ def obter_resumo_unidades(situacao_filtro=None):
 
 
 def obter_alteracoes_pendentes():
-    """Alterações com status PENDENTE, mais recentes primeiro, para a     seção "Aprovações"..."""
     return (
         Alteracao.query.filter_by(status=StatusAlteracao.PENDENTE)
         .order_by(Alteracao.created_at.desc())
@@ -57,7 +52,6 @@ def obter_alteracoes_pendentes():
 
 
 def obter_atividade_recente(usuario_id=None):
-    """Registros de auditoria mais recentes, para a seção "Atividade     recente" —..."""
     query = Auditoria.query
     if usuario_id is not None:
         query = query.filter_by(usuario_id=usuario_id)

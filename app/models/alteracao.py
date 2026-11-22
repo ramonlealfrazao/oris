@@ -1,5 +1,3 @@
-"""Model Alteracao."""
-
 from app.extensions import db
 from app.models.enums import StatusAlteracao, TipoOperacaoAlteracao
 from app.utils.datetime_utils import utcnow

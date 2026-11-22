@@ -1,5 +1,3 @@
-"""Catálogo das consultas da Etapa 03 - SQL explícito."""
-
 from app.bd.conexao import consultar
 
 OPCOES_SITUACAO_UNIDADE = [("", "Todas"), ("ATIVA", "Ativa"),
@@ -281,8 +279,6 @@ OPCOES_TIPO_MANUT = [("", "Todos"), ("PREVENTIVA", "Preventiva"), ("CORRETIVA", 
 OPCOES_SITUACAO_MANUT = [("", "Todas"), ("ABERTA", "Aberta"), ("CONCLUIDA", "Concluída"),
                          ("CANCELADA", "Cancelada")]
 
-# Views da Etapa 06 (criadas em database/etapa05_objetos.sql). Entram no mesmo
-# catálogo: aparecem com filtros/parâmetros e gráfico, como as consultas.
 CONSULTAS += [
     {
         "id": "v1",
@@ -360,7 +356,6 @@ CONSULTAS_POR_ID = {c["id"]: c for c in CONSULTAS}
 
 
 def ler_parametros(consulta, origem):
-    """Lê e valida os parâmetros da consulta a partir de um dict (ex."""
     valores = {}
     for p in consulta["parametros"]:
         bruto = origem.get(p["nome"], p["padrao"])
@@ -370,7 +365,7 @@ def ler_parametros(consulta, origem):
             except (TypeError, ValueError):
                 valor = p["padrao"]
             valor = max(p.get("min", valor), min(p.get("max", valor), valor))
-        else:  # select
+        else:
             permitidos = {op[0] for op in p["opcoes"]}
             valor = bruto if bruto in permitidos else p["padrao"]
             valor = valor or None

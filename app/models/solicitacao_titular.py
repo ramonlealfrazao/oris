@@ -1,5 +1,3 @@
-"""Model SolicitacaoTitular: pedidos de direitos do titular (LGPD, art. 18)."""
-
 from app.extensions import db
 from app.models.enums import StatusSolicitacaoTitular, TipoSolicitacaoTitular
 from app.utils.datetime_utils import utcnow

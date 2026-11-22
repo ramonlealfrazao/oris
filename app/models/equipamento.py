@@ -1,5 +1,3 @@
-"""Model Equipamento."""
-
 from app.extensions import db
 from app.models.enums import SituacaoAtivoInativo
 from app.models.mixins import TimestampMixin

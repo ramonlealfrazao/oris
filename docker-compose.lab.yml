@@ -1,13 +1,3 @@
-# ORIS - LABORATORIO VISUAL de LDAP + OIDC (Keycloak) + S3 na AWS.
-# Sobe tudo com interface grafica: ORIS, OpenLDAP + phpLDAPadmin (tela web do LDAP) e Keycloak
-# (console web). Pensado para aprender e demonstrar; o passo a passo esta em docs/LAB_VISUAL.md.
-# Normalmente quem sobe isto e o roteiro docker/lab/user-data.sh (campo "User data" da EC2):
-#   sudo docker compose -f docker-compose.lab.yml --env-file .env.lab up -d --build
-#
-# Diferencas em relacao ao docker-compose.aws.yml + idp:
-# - LDAP comeca VAZIO (so as pastas usuarios e grupos): pessoas e grupos sao criados na tela;
-# - Keycloak comeca SEM realm: realm, client, federacao e mapeadores sao feitos no console;
-# - consoles de administracao (Keycloak e phpLDAPadmin) so abrem para o IP do laboratorio (MEU_IP).
 services:
   db:
     image: mysql:8.0
@@ -53,10 +43,8 @@ services:
       TRUSTED_PROXY_COUNT: "1"
       ORIS_SEED: ${ORIS_SEED:-true}
       ORIS_DEMO_SENHA: ${SENHA_ADMIN:?defina SENHA_ADMIN}
-      # Requisito 4 - S3 (o bucket e criado no console da AWS; ver docker/lab/configurar.sh)
       S3_BUCKET: ${S3_BUCKET:-}
       S3_REGION: ${S3_REGION:-us-east-1}
-      # Requisito 3 - LDAP (STARTTLS validando a CA propria do laboratorio)
       LDAP_URI: ldap://ldap.oris.local:389
       LDAP_USE_STARTTLS: "true"
       LDAP_CA_CERT_FILE: /certs/ca.crt
@@ -65,7 +53,6 @@ services:
       LDAP_USER_BASE: ou=usuarios,dc=oris,dc=local
       LDAP_GROUP_BASE: ou=grupos,dc=oris,dc=local
       DIRETORIO_MAPA_GRUPO_PERFIL: '{"oris-admin":"ADMINISTRADOR","oris-gestao":"GESTAO_INFORMACAO","oris-saude":"RESPONSAVEL_SAUDE_BUCAL","oris-gestor":"GESTOR"}'
-      # Requisito 3 - OIDC (liga depois de criar o client no Keycloak; ver docker/lab/configurar.sh)
       OIDC_ENABLED: ${OIDC_ENABLED:-false}
       OIDC_ISSUER: https://kc.${ORIS_DOMAIN:?defina ORIS_DOMAIN}/realms/oris
       OIDC_CLIENT_ID: oris
@@ -96,7 +83,6 @@ services:
       default:
         aliases:
           - ldap.oris.local
-    # Sem "ports": so a rede interna do Docker alcanca o LDAP.
 
   phpldapadmin:
     image: osixia/phpldapadmin:0.9.0
@@ -105,8 +91,8 @@ services:
       - ldap
     environment:
       PHPLDAPADMIN_LDAP_HOSTS: ldap.oris.local
-      PHPLDAPADMIN_HTTPS: "false"          # o HTTPS e feito pelo Caddy
-      PHPLDAPADMIN_LDAP_CLIENT_TLS: "false"  # conversa so dentro da rede interna do Docker
+      PHPLDAPADMIN_HTTPS: "false"
+      PHPLDAPADMIN_LDAP_CLIENT_TLS: "false"
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
@@ -120,12 +106,11 @@ services:
       KC_HOSTNAME: https://kc.${ORIS_DOMAIN:?defina ORIS_DOMAIN}
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
-      # Confia na CA do laboratorio para a federacao com o LDAP via STARTTLS
       KC_TRUSTSTORE_PATHS: /opt/keycloak/conf/truststores/ca.crt
       JAVA_OPTS_KC_HEAP: "-Xms256m -Xmx640m"
     volumes:
       - ./docker/ldap/certs/ca.crt:/opt/keycloak/conf/truststores/ca.crt:ro
-      - kc_data:/opt/keycloak/data   # o que for feito no console sobrevive a reinicios
+      - kc_data:/opt/keycloak/data
 
   caddy:
     image: caddy:2

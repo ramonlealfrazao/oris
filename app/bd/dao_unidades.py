@@ -1,5 +1,3 @@
-"""DAO de Unidades de Saúde Bucal - SQL explícito (PyMySQL / DB-API)."""
-
 from app.bd import dao_auditoria
 from app.bd.conexao import ErroBanco, consultar, consultar_um, transacao
 
@@ -82,7 +80,7 @@ def inserir(dados, usuario_id):
     with transacao() as cur:
         dao_auditoria.definir_usuario(cur, usuario_id)
         cur.execute(SQL_INSERIR, _valores(dados))
-        novo_id = cur.lastrowid  # ≈ getGeneratedKeys() do JDBC
+        novo_id = cur.lastrowid
         dao_auditoria.registrar(
             cur, usuario_id, "BD_INSERIR", "unidades", novo_id,
             f"INSERT de unidade via módulo BD: {dados['nome']}",

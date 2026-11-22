@@ -1,5 +1,3 @@
-"""Testes da API REST v1 (somente leitura) e da especificação OpenAPI."""
-
 import pytest
 
 from app import create_app

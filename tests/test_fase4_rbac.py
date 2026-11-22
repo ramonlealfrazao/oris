@@ -1,5 +1,3 @@
-"""Testes da FASE 4 - RBAC (controle de acesso por perfil)."""
-
 import pytest
 
 from app import create_app

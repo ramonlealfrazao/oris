@@ -1,5 +1,3 @@
-"""Formulários do módulo BD (Etapa 03)."""
-
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, DateField, DecimalField, SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, Regexp
@@ -97,5 +95,4 @@ class ManutencaoBDForm(FlaskForm):
 
 
 class ExcluirForm(FlaskForm):
-    """Só carrega o token CSRF - DELETE sempre via POST."""
     submit = SubmitField("Excluir")

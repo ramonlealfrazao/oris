@@ -1,5 +1,3 @@
-"""Testes da FASE 6 - CRUD de Serviços e Equipamentos."""
-
 import json
 
 import pytest
@@ -178,7 +176,7 @@ def test_solicita_edicao_de_servico(client, app):
 
     with app.app_context():
         servico = db.session.get(Servico, ids["servico_a"])
-        assert servico.nome == "Odontologia Geral"  # ainda não mudou
+        assert servico.nome == "Odontologia Geral"
 
 
 def test_aprovar_edicao_de_servico_aplica_a_mudanca(client, app):
@@ -214,7 +212,7 @@ def test_solicita_alteracao_de_situacao_servico(client, app):
 
     with app.app_context():
         servico = db.session.get(Servico, ids["servico_a"])
-        assert servico.situacao == SituacaoAtivoInativo.ATIVO  # ainda não mudou
+        assert servico.situacao == SituacaoAtivoInativo.ATIVO
 
 
 def test_aprovar_alteracao_de_situacao_de_servico_aplica_a_mudanca(client, app):
@@ -519,7 +517,7 @@ def test_solicita_edicao_de_equipamento(client, app):
 
     with app.app_context():
         equipamento = db.session.get(Equipamento, ids["equipamento_a"])
-        assert equipamento.nome == "Cadeira Odontológica"  # ainda não mudou
+        assert equipamento.nome == "Cadeira Odontológica"
 
 
 def test_aprovar_edicao_de_equipamento_aplica_a_mudanca(client, app):
@@ -561,7 +559,7 @@ def test_solicita_alteracao_de_situacao_equipamento(client, app):
 
     with app.app_context():
         equipamento = db.session.get(Equipamento, ids["equipamento_a"])
-        assert equipamento.situacao == SituacaoAtivoInativo.ATIVO  # ainda não mudou
+        assert equipamento.situacao == SituacaoAtivoInativo.ATIVO
 
 
 def test_aprovar_alteracao_de_situacao_de_equipamento_aplica_a_mudanca(client, app):

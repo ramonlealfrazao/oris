@@ -1,5 +1,3 @@
-"""Serviço central de auditoria (Fase 8)."""
-
 import json
 
 from flask import has_request_context, request
@@ -20,11 +18,6 @@ def registrar_auditoria(
     origem_ip=None,
     identificador_tentado=None,
 ):
-    """Cria (sem commitar) um registro de Auditoria.
-
-    `usuario` pode ser None (tentativa de login de quem nao existe). A origem (IP)
-    vem da requisicao em andamento, se nao for informada.
-    """
     if origem_ip is None and has_request_context():
         origem_ip = request.remote_addr
     auditoria = Auditoria(

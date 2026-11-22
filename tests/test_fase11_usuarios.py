@@ -1,5 +1,3 @@
-"""Testes da FASE 11 - Administração de Usuários."""
-
 import pytest
 
 from app import create_app
@@ -133,7 +131,7 @@ def test_criacao_de_usuario_funciona(client, app):
 def test_email_duplicado_e_rejeitado(client):
     _login(client, PerfilUsuario.ADMINISTRADOR)
     dados = dict(DADOS_NOVO_USUARIO)
-    dados["email"] = EMAILS[PerfilUsuario.GESTOR]  # já existe
+    dados["email"] = EMAILS[PerfilUsuario.GESTOR]
     resp = client.post("/usuarios/novo", data=dados, follow_redirects=True)
     assert resp.status_code == 200
     assert "Já existe um usuário cadastrado" in resp.get_data(as_text=True)
@@ -284,7 +282,7 @@ def test_usuario_inativo_nao_acessa_areas_protegidas(client, app):
 
     client.post("/login", data={"email": alvo.email, "senha": SENHA})
     resp = client.get("/unidades")
-    assert resp.status_code == 200  # ainda ativo, acesso normal
+    assert resp.status_code == 200
 
     client_admin = client.application.test_client()
     client_admin.post("/login", data={"email": EMAILS[PerfilUsuario.ADMINISTRADOR], "senha": SENHA})

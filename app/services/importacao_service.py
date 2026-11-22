@@ -1,5 +1,3 @@
-"""Serviço central do importador de planilhas (Fase 10; adaptado na Stage "importador x..."""
-
 import re
 import unicodedata
 
@@ -8,7 +6,7 @@ import pandas as pd
 from app.forms import CNES_REGEX
 from app.models import Equipamento, Servico, SituacaoAtivoInativo, SituacaoUnidade, Unidade
 
-LIMITE_TAMANHO_BYTES = 5 * 1024 * 1024  # 5 MB
+LIMITE_TAMANHO_BYTES = 5 * 1024 * 1024
 LIMITE_LINHAS = 2000
 LINHAS_PREVIA = 50
 
@@ -18,7 +16,7 @@ _CNES_REGEX_COMPILADO = re.compile(CNES_REGEX)
 
 
 class ArquivoInvalidoError(Exception):
-    """Erro amigável de leitura do arquivo (formato, vazio, corrompido, sem cabeçalho,..."""
+    pass
 
 
 CAMPOS_POR_ENTIDADE = {
@@ -93,7 +91,6 @@ _SINONIMOS = {
 
 
 def _normalizar_texto(valor):
-    """Normaliza um texto para comparação"""
     if valor is None:
         return ""
     texto = str(valor).strip()
@@ -102,7 +99,6 @@ def _normalizar_texto(valor):
 
 
 def ler_planilha(caminho, extensao):
-    """Lê o arquivo (.csv ou .xlsx) e devolve um DataFrame do pandas, com todas as..."""
     try:
         if extensao == ".csv":
             df = pd.read_csv(caminho, dtype=str, keep_default_na=False, sep=None, engine="python")
@@ -134,7 +130,6 @@ def ler_planilha(caminho, extensao):
 
 
 def detectar_mapeamento_automatico(colunas_planilha, entidade):
-    """Sugere, para cada campo alvo da entidade, qual coluna da planilha corresponde a..."""
     campos = CAMPOS_POR_ENTIDADE[entidade]["obrigatorios"] + CAMPOS_POR_ENTIDADE[entidade]["opcionais"]
     colunas_normalizadas = {_normalizar_texto(coluna): coluna for coluna in colunas_planilha}
 
@@ -150,7 +145,6 @@ def detectar_mapeamento_automatico(colunas_planilha, entidade):
 
 
 def aplicar_mapeamento(df, mapeamento):
-    """Constrói a lista de linhas (uma por registro da planilha), cada uma com os..."""
     linhas = []
     for posicao, linha_original in df.iterrows():
         dados = {}
@@ -383,12 +377,10 @@ _TIPOS_REGISTRO_REDE = ("UNIDADE", "SERVICO", "EQUIPAMENTO")
 
 
 def _texto_e_verdadeiro(valor):
-    """'S'/'Sim'/'Yes'/'1'/'true' (sem acento, case-insensitive) -> True."""
     return _normalizar_texto(valor) in {"s", "sim", "yes", "y", "1", "true"}
 
 
 def _texto_e_falso_explicito(valor):
-    """'N'/'Nao'/'No'/'0'/'false' -> True."""
     return _normalizar_texto(valor) in {"n", "nao", "no", "0", "false"}
 
 
@@ -401,7 +393,6 @@ def _ativo_para_situacao_simples(valor):
 
 
 def _validar_linha_rede(numero_linha, dados, lista_erros):
-    """Classifica uma linha do formato unificado em 0..3 sub-registros ..."""
     e_unidade = _texto_e_verdadeiro(dados.get("unidade_flag", ""))
     e_equipamento = _texto_e_verdadeiro(dados.get("equipamento_flag", ""))
     tipo_servico = dados.get("tipo_servico", "").strip()
@@ -483,7 +474,6 @@ def _aviso(lista_avisos, linha, mensagem):
 
 
 def _resolver_vinculo_unidade_existente(cnes, numero_linha, lista_avisos, contexto):
-    """Vínculo com Unidade só é aplicado quando 'seguro'"""
     candidatas = Unidade.query.filter_by(cnes=cnes).all()
     if len(candidatas) == 1:
         return candidatas[0].id
@@ -498,7 +488,6 @@ def _resolver_vinculo_unidade_existente(cnes, numero_linha, lista_avisos, contex
 
 
 def _resolver_vinculos_rede(dados, registros, lista_avisos, numero_linha):
-    """Resolve, quando seguro, os vínculos entre os sub-registros produzidos por..."""
     e_unidade = any(registro["tipo"] == "UNIDADE" for registro in registros)
     e_servico = any(registro["tipo"] == "SERVICO" for registro in registros)
     e_equipamento = any(registro["tipo"] == "EQUIPAMENTO" for registro in registros)
@@ -545,7 +534,6 @@ _TIPO_REGISTRO_POR_ENTIDADE_SIMPLES = {
 
 
 def validar_e_classificar(df, mapeamento, entidade):
-    """Valida e classifica todas as linhas do DataFrame conforme a entidade."""
     linhas_mapeadas = aplicar_mapeamento(df, mapeamento)
 
     erros = []
@@ -598,7 +586,7 @@ def validar_e_classificar(df, mapeamento, entidade):
             classificacao = None
             if valido:
                 classificacao, registro_existente = _classificar_servico(dados_normalizados)
-        else:  # equipamentos
+        else:
             valido, dados_normalizados = _validar_linha_equipamento(numero_linha, dados, chaves_vistas, erros)
             registro_existente = None
             classificacao = None

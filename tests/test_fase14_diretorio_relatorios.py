@@ -1,12 +1,3 @@
-"""
-Testes da FASE 14 — Requisito 3 (LDAP/OIDC populando usuários e grupos)
-e Requisito 4 (exportação de relatórios para o Amazon S3).
-
-Nenhum teste usa rede: o LDAP roda no modo MOCK_SYNC do próprio ldap3,
-o provedor OIDC é simulado trocando as duas funções HTTP do módulo, e o
-S3 é um cliente falso injetado no lugar do boto3.
-"""
-
 import base64
 import json
 import time
@@ -83,10 +74,6 @@ def _login(client, perfil):
     return client.post("/login", data={"email": EMAILS[perfil], "senha": SENHA}, follow_redirects=True)
 
 
-# ==================================================================
-# Requisito 3 — mapa grupo -> perfil
-# ==================================================================
-
 def test_mapa_grupo_perfil_e_carregado(app):
     mapa = carregar_mapa_grupo_perfil()
     assert mapa["oris-admin"] == PerfilUsuario.ADMINISTRADOR
@@ -107,10 +94,6 @@ def test_perfil_de_maior_privilegio_vence(app):
     assert resolver_perfil(["oris-gestor", "oris-gestao"], mapa) == PerfilUsuario.GESTAO_INFORMACAO
     assert resolver_perfil(["outro-grupo"], mapa) is None
 
-
-# ==================================================================
-# Requisito 3 — LDAP (modo MOCK real do ldap3)
-# ==================================================================
 
 def _conexao_ldap_mock(com_member_of=False):
     conexao = Connection(Server("ldap-falso"), user="cn=svc,o=oris", password="x", client_strategy=MOCK_SYNC)
@@ -146,16 +129,15 @@ def test_ldap_sync_popula_usuarios_e_grupos(app):
     _config_ldap(app)
     resumo = sincronizar_usuarios(buscar_usuarios_ldap(conexao=_conexao_ldap_mock()), OrigemDiretorio.LDAP)
 
-    assert resumo["criados"] == 2  # ana e bia; caio não tem grupo mapeado
+    assert resumo["criados"] == 2
     ana = Usuario.query.filter_by(email="ana@rede.gov").first()
     assert ana.origem == OrigemDiretorio.LDAP
     assert ana.identificador_externo == "ana"
-    assert ana.perfil == PerfilUsuario.ADMINISTRADOR  # admin + gestão -> maior privilégio
+    assert ana.perfil == PerfilUsuario.ADMINISTRADOR
     assert {g.nome for g in ana.grupos} == {"oris-admin", "oris-gestao"}
     assert Usuario.query.filter_by(email="bia@rede.gov").first().perfil == PerfilUsuario.GESTAO_INFORMACAO
     assert Usuario.query.filter_by(email="caio@rede.gov").first() is None
     assert any("caio" in motivo for motivo in resumo["ignorados"])
-    # Só os grupos de usuários provisionados são gravados (o "outro" é de Caio, ignorado).
     assert Grupo.query.filter_by(origem=OrigemDiretorio.LDAP).count() == 2
 
 
@@ -172,7 +154,6 @@ def test_ldap_sync_atualiza_perfil_e_desativa_ausente(app):
         [UsuarioExterno("ana", "Ana", "ana@rede.gov", ["oris-admin"]), UsuarioExterno("bia", "Bia", "bia@rede.gov", ["oris-gestao"])],
         OrigemDiretorio.LDAP,
     )
-    # Ana vira gestor; Bia some do diretório. Admin local garante que não é o último admin.
     resumo = sincronizar_usuarios([UsuarioExterno("ana", "Ana", "ana@rede.gov", ["oris-gestor"])], OrigemDiretorio.LDAP)
 
     ana = Usuario.query.filter_by(email="ana@rede.gov").first()
@@ -222,12 +203,10 @@ def test_sync_nunca_altera_conta_local_com_mesmo_email(app):
 
 
 def test_sync_protege_o_ultimo_administrador(app):
-    # Torna o único admin do sistema uma conta LDAP.
     Usuario.query.filter_by(perfil=PerfilUsuario.ADMINISTRADOR).delete()
     db.session.commit()
     sincronizar_usuarios([UsuarioExterno("ana", "Ana", "ana@rede.gov", ["oris-admin"])], OrigemDiretorio.LDAP)
 
-    # Ana some do diretório e perde o grupo: continuaria sem admin -> protegida.
     resumo = sincronizar_usuarios([], OrigemDiretorio.LDAP)
     sincronizar_usuarios([UsuarioExterno("ana", "Ana", "ana@rede.gov", ["oris-gestor"])], OrigemDiretorio.LDAP)
 
@@ -291,7 +270,7 @@ def test_ldap_ignora_memberof_fora_da_base_de_grupos(app):
          "memberOf": ["cn=oris-admin,ou=outra-ou,o=oris", "cn=oris-gestor,ou=grupos,o=oris"]},
     )
     eva = {e.identificador: e for e in buscar_usuarios_ldap(conexao=conexao)}["eva"]
-    assert eva.grupos == ["oris-gestor"]  # o "oris-admin" de outra OU e ignorado
+    assert eva.grupos == ["oris-gestor"]
 
 
 def test_ldap_sem_uri_e_recusado(app):
@@ -316,10 +295,6 @@ def test_comando_cli_sincronizar_ldap_esta_registrado(app):
     assert "sincronizar-ldap" in app.cli.commands
 
 
-# ==================================================================
-# Requisito 3 — OIDC (provedor simulado)
-# ==================================================================
-
 ISSUER = "https://idp.exemplo.test/realms/oris"
 
 
@@ -327,7 +302,6 @@ _CHAVE_OIDC = gerar_chave_privada()
 
 
 def _jwt(claims):
-    """id_token assinado (RS256) com a chave de teste; o JWKS dela é servido por `fake_get`."""
     return assinar(claims, _CHAVE_OIDC)
 
 
@@ -392,7 +366,7 @@ def test_oidc_redireciona_com_pkce_state_e_nonce(client, oidc):
     assert resp.headers["Location"].startswith(f"{ISSUER}/auth?")
     assert p["response_type"] == "code" and p["client_id"] == "oris-web"
     assert p["code_challenge_method"] == "S256" and p["code_challenge"]
-    assert p["prompt"] == "login"  # sempre pede a senha no provedor
+    assert p["prompt"] == "login"
     assert p["state"] and p["nonce"]
 
 
@@ -403,7 +377,7 @@ def test_oidc_login_completo_provisiona_usuario_e_grupos(app, client, oidc):
 
     resp = client.get(f"/login/oidc/callback?code=abc&state={p['state']}")
     assert resp.status_code == 302 and resp.headers["Location"].endswith("/")
-    assert oidc["dados_token"]["code_verifier"]  # PKCE enviado ao provedor
+    assert oidc["dados_token"]["code_verifier"]
 
     with app.app_context():
         dora = Usuario.query.filter_by(email="dora@rede.gov").first()
@@ -411,7 +385,7 @@ def test_oidc_login_completo_provisiona_usuario_e_grupos(app, client, oidc):
         assert dora.perfil == PerfilUsuario.GESTAO_INFORMACAO
         assert [g.nome for g in dora.grupos] == ["oris-gestao"]
         assert Auditoria.query.filter_by(acao="LOGIN", usuario_id=dora.id).first() is not None
-    assert client.get("/dashboard").status_code == 200  # sessão autenticada
+    assert client.get("/dashboard").status_code == 200
 
 
 def test_oidc_rejeita_state_incorreto(client, oidc):
@@ -476,10 +450,6 @@ def test_oidc_endpoint_sem_https_e_recusado(app):
     with pytest.raises(DiretorioConfigError):
         oidc_service.iniciar_autorizacao("http://localhost/cb")
 
-
-# ==================================================================
-# Requisito 4 — relatórios CSV
-# ==================================================================
 
 def _dados_rede(app):
     with app.app_context():
@@ -558,10 +528,6 @@ def test_pagina_de_relatorios_lista_as_tres_entidades(client):
         assert titulo in html
 
 
-# ==================================================================
-# Requisito 4 — exportação para o Amazon S3 (cliente falso)
-# ==================================================================
-
 class ClienteS3Falso:
     def __init__(self, falhar=False):
         self.objetos = {}
@@ -599,7 +565,7 @@ def test_exportar_para_s3_envia_criptografado_e_audita(app, client, s3):
     assert b"UBS Centro" in objeto["Body"]
     assert "enviado ao Amazon S3" in html and "Baixar arquivo do S3" in html
     assert "SHA-256" in html and "expira em 10 min" in html
-    assert "expira=600" in html  # o link existe, mas só como href do botão
+    assert "expira=600" in html
     assert "Link temporário de download:" not in html
     with app.app_context():
         assert Auditoria.query.filter_by(acao="EXPORTAR_RELATORIO", tabela="unidades").first() is not None
@@ -658,9 +624,6 @@ def test_botao_de_exportar_so_aparece_com_s3_e_permissao(app, client, s3):
     assert "Exportar para S3" not in client.get("/relatorios").get_data(as_text=True)
 
 
-# ------------------------------------------------------------------
-# Usuários do LDAP entrando pelo SSO (LDAP federado no Keycloak)
-# ------------------------------------------------------------------
 def _conta_ldap_sincronizada(app, uid="ana.admin", email="ana.admin@rede.gov"):
     with app.app_context():
         db.session.add(Usuario(
@@ -682,7 +645,7 @@ def test_usuario_do_ldap_ja_sincronizado_entra_pelo_sso_na_mesma_conta(app, clie
     assert resp.status_code == 302 and resp.headers["Location"].endswith("/")
     with app.app_context():
         contas = Usuario.query.filter_by(email="ana.admin@rede.gov").all()
-        assert len(contas) == 1  # não cria uma segunda conta OIDC
+        assert len(contas) == 1
         assert contas[0].origem == OrigemDiretorio.LDAP and contas[0].identificador_externo == "ana.admin"
         log = Auditoria.query.filter_by(acao="LOGIN", usuario_id=contas[0].id).first()
         assert log is not None and "conta do LDAP" in log.descricao
@@ -697,7 +660,6 @@ def test_usuario_do_ldap_ainda_nao_sincronizado_vira_conta_ldap(app, client, oid
     assert client.get(f"/login/oidc/callback?code=abc&state={p['state']}").headers["Location"].endswith("/")
     with app.app_context():
         bruno = Usuario.query.filter_by(email="bruno@rede.gov").one()
-        # Mesma identidade que a `flask sincronizar-ldap` usará depois (sem duplicar)
         assert bruno.origem == OrigemDiretorio.LDAP and bruno.identificador_externo == "bruno.gestao"
         assert bruno.perfil == PerfilUsuario.GESTOR
 
@@ -713,7 +675,6 @@ def test_usuario_do_ldap_sem_grupo_mapeado_continua_negado(app, client, oidc):
 
 
 def test_claim_ldap_uid_ignorada_se_a_configuracao_estiver_desligada(app, client, oidc):
-    # Sem OIDC_CLAIM_LDAP_UID, um token com ldap_uid NÃO assume a conta do LDAP.
     app.config["OIDC_CLAIM_LDAP_UID"] = ""
     _conta_ldap_sincronizada(app)
     _, p = _iniciar(client)
@@ -744,7 +705,7 @@ def test_realm_do_keycloak_federa_o_ldap_com_tls_e_emite_ldap_uid():
     ldap = realm["components"]["org.keycloak.storage.UserStorageProvider"][0]
     cfg = ldap["config"]
     assert cfg["startTls"] == ["true"] and cfg["editMode"] == ["READ_ONLY"]
-    assert cfg["bindCredential"] == ["@@LDAP_ADMIN_PASSWORD@@"]  # segredo só no arquivo gerado
+    assert cfg["bindCredential"] == ["@@LDAP_ADMIN_PASSWORD@@"]
     mapeadores = {m["name"]: m for m in ldap["subComponents"]["org.keycloak.storage.ldap.mappers.LDAPStorageMapper"]}
     assert mapeadores["ldap_uid"]["config"]["read.only"] == ["true"]
     assert mapeadores["grupos"]["config"]["mode"] == ["READ_ONLY"]
@@ -769,7 +730,7 @@ def test_historico_de_exportacoes_aparece_na_tela_e_na_planilha(app, client, s3)
     assert resp.status_code == 200 and resp.mimetype == "text/csv"
     linhas = resp.get_data(as_text=True).lstrip("﻿").splitlines()
     assert linhas[0].startswith("data_hora_utc,relatorio,exportado_por")
-    assert len(linhas) == 3  # cabeçalho + 2 exportações
+    assert len(linhas) == 3
     assert any(",unidades," in l and "oris/relatorios/unidades/" in l for l in linhas)
 
 

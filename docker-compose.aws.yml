@@ -1,6 +1,3 @@
-# ORIS na AWS (EC2): Caddy (HTTPS) + app + MySQL 8. Autonomo (nao usa o docker-compose.yml).
-# Subir:  sudo docker compose -f docker-compose.aws.yml --env-file .env.aws up -d --build
-# Exige um arquivo .env.aws (ver docs/AWS_DEPLOY.md). Sem valores padrao inseguros: faltou variavel, nao sobe.
 services:
   db:
     image: mysql:8.0
@@ -37,7 +34,6 @@ services:
       DB_USER: oris_user
       DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD}
       SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY}
-      # Chave Fernet dos dados cifrados (uploads e alteracoes). Gere UMA vez e guarde copia segura.
       DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?defina DATA_ENCRYPTION_KEY}
       SESSION_COOKIE_SECURE: "true"
       TRUSTED_PROXY_COUNT: "1"
@@ -45,7 +41,6 @@ services:
       ORIS_DEMO_SENHA: ${ORIS_DEMO_SENHA:?defina ORIS_DEMO_SENHA}
       S3_BUCKET: ${S3_BUCKET:-}
       S3_REGION: ${S3_REGION:-us-east-1}
-    # Sem "ports": so o Caddy fala com a app, dentro da rede do Docker.
 
   caddy:
     image: caddy:2

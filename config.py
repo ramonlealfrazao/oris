@@ -1,5 +1,3 @@
-"""Configurações da aplicação ORIS."""
-
 import os
 from datetime import timedelta
 
@@ -7,14 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Valor de fallback usado apenas em desenvolvimento. Em produção a aplicação
-# se recusa a iniciar com ele (ver create_app).
 SECRET_KEY_PADRAO = "dev-key-insegura-trocar-no-env"
 
 
 class Config:
-    """Configuração base, compartilhada por todos os ambientes."""
-
     SECRET_KEY = os.getenv("SECRET_KEY", SECRET_KEY_PADRAO)
     DATA_ENCRYPTION_KEY = os.getenv("DATA_ENCRYPTION_KEY", "")
 
@@ -33,12 +27,8 @@ class Config:
     SESSION_LIFETIME_MINUTES = int(os.getenv("SESSION_LIFETIME_MINUTES", "60"))
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=SESSION_LIFETIME_MINUTES)
 
-    # Quantos proxies reversos CONFIAVEIS ficam na frente da app (0 = nenhum).
-    # So com >0 o X-Forwarded-For/Proto/Host e aceito (ProxyFix); caso contrario
-    # o cabecalho seria forjavel e o IP da auditoria/rate limit nao valeria nada.
     TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "0"))
 
-    # --- LGPD: identificação do controlador e do encarregado ---
     LGPD_CONTROLADOR = os.getenv("LGPD_CONTROLADOR", "Secretaria de Saúde do Recife")
     LGPD_ENCARREGADO_NOME = os.getenv("LGPD_ENCARREGADO_NOME", "")
     LGPD_ENCARREGADO_EMAIL = os.getenv("LGPD_ENCARREGADO_EMAIL", "")
@@ -56,20 +46,14 @@ class Config:
 
     RATE_LIMIT_LOGIN_ENABLED = True
 
-    # MFA (TOTP) obrigatorio no login local, para TODOS os perfis. Contas LDAP/OIDC
-    # fazem o segundo fator no provedor (Keycloak). Desligar so em casos excepcionais.
     MFA_OBRIGATORIO = os.getenv("MFA_OBRIGATORIO", "true").strip().lower() == "true"
 
-    # --- Diretório externo: LDAP e OIDC (Requisito 3) ---
-    # Nada sensível fica no código: tudo vem do .env. Mapeamento
-    # grupo -> perfil RBAC, em JSON, ex.:
-    #   {"oris-admin": "ADMINISTRADOR", "oris-gestao": "GESTAO_INFORMACAO"}
     DIRETORIO_MAPA_GRUPO_PERFIL = os.getenv("DIRETORIO_MAPA_GRUPO_PERFIL", "{}")
 
-    LDAP_URI = os.getenv("LDAP_URI", "")  # ex.: ldaps://ldap.exemplo.com
+    LDAP_URI = os.getenv("LDAP_URI", "")
     LDAP_USE_STARTTLS = os.getenv("LDAP_USE_STARTTLS", "false").lower() == "true"
     LDAP_ALLOW_INSECURE = os.getenv("LDAP_ALLOW_INSECURE", "false").lower() == "true"
-    LDAP_CA_CERT_FILE = os.getenv("LDAP_CA_CERT_FILE", "")  # CA interna (opcional)
+    LDAP_CA_CERT_FILE = os.getenv("LDAP_CA_CERT_FILE", "")
     LDAP_BIND_DN = os.getenv("LDAP_BIND_DN", "")
     LDAP_BIND_PASSWORD = os.getenv("LDAP_BIND_PASSWORD", "")
     LDAP_USER_BASE = os.getenv("LDAP_USER_BASE", "")
@@ -83,42 +67,29 @@ class Config:
     LDAP_ATTR_GROUP_MEMBER = os.getenv("LDAP_ATTR_GROUP_MEMBER", "member")
 
     OIDC_ENABLED = os.getenv("OIDC_ENABLED", "false").lower() == "true"
-    OIDC_ISSUER = os.getenv("OIDC_ISSUER", "")  # ex.: https://login.exemplo.com/realms/oris
+    OIDC_ISSUER = os.getenv("OIDC_ISSUER", "")
     OIDC_CLIENT_ID = os.getenv("OIDC_CLIENT_ID", "")
     OIDC_CLIENT_SECRET = os.getenv("OIDC_CLIENT_SECRET", "")
     OIDC_SCOPES = os.getenv("OIDC_SCOPES", "openid profile email")
     OIDC_CLAIM_GROUPS = os.getenv("OIDC_CLAIM_GROUPS", "groups")
-    # Claim com o uid do LDAP, emitida pelo provedor SÓ para usuários federados do LDAP
-    # (Keycloak: mapper de atributo somente leitura). Vazia = desligado: todo login OIDC
-    # vira conta OIDC. Ligue apenas se o provedor for confiável e o atributo não puder
-    # ser editado pelo próprio usuário.
     OIDC_CLAIM_LDAP_UID = os.getenv("OIDC_CLAIM_LDAP_UID", "")
-    # "login" = sempre pedir a senha no provedor ao clicar em SSO (padrão, evita entrar com a
-    # sessão de outra pessoa no mesmo navegador). Vazio = reaproveitar a sessão do provedor.
     OIDC_PROMPT = os.getenv("OIDC_PROMPT", "login")
     OIDC_ALLOW_INSECURE = os.getenv("OIDC_ALLOW_INSECURE", "false").lower() == "true"
 
-    # --- Exportação de relatórios para nuvem: Amazon S3 (Requisito 4) ---
-    # Credenciais NÃO ficam aqui: o boto3 as obtém da cadeia padrão da
-    # AWS (variáveis AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY, perfil
-    # ~/.aws ou IAM Role da instância).
     S3_BUCKET = os.getenv("S3_BUCKET", "")
     S3_REGION = os.getenv("S3_REGION", "")
     S3_PREFIX = os.getenv("S3_PREFIX", "oris/relatorios")
-    S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "")  # opcional (MinIO/LocalStack)
+    S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "")
     S3_URL_EXPIRA_SEGUNDOS = int(os.getenv("S3_URL_EXPIRA_SEGUNDOS", "900"))
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SESSION_COOKIE_SECURE = False  # em dev normalmente não há HTTPS
+    SESSION_COOKIE_SECURE = False
 
 
 class ProductionConfig(Config):
     DEBUG = False
-    # Exige HTTPS em produção. So desliga se SESSION_COOKIE_SECURE=false for
-    # definido de forma EXPLICITA (ex.: demonstracao em http://localhost via
-    # Docker). Sem a variavel, o padrao seguro (True) vale.
     SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "true").strip().lower() != "false"
 
 
@@ -127,7 +98,6 @@ class TestingConfig(Config):
     DEBUG = True
     WTF_CSRF_ENABLED = False
     RATE_LIMIT_LOGIN_ENABLED = False
-    # A suite antiga faz login so com senha; os testes do MFA ligam isto explicitamente.
     MFA_OBRIGATORIO = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     DATA_ENCRYPTION_KEY = "8YUlDwN5PXNRQGa8BFCUZkwAA95sjPiITg3aJ8u0MZs="
@@ -141,6 +111,5 @@ config_by_name = {
 
 
 def get_config():
-    """Retorna a classe de configuração de acordo com FLASK_ENV."""
     env = os.getenv("FLASK_ENV", "development")
     return config_by_name.get(env, DevelopmentConfig)

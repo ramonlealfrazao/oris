@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""Gera docker/keycloak/generated/oris-realm.json a partir do modelo, trocando os marcadores
-@@VAR@@ pelas variaveis de ambiente (ORIS_DOMAIN, OIDC_CLIENT_SECRET, ORIS_DEMO_SENHA,
-LDAP_ADMIN_PASSWORD - usada pela federacao do Keycloak com o OpenLDAP).
-Os segredos ficam so no arquivo gerado (ignorado pelo Git), nunca no repositorio."""
 import json
 import os
 import re
@@ -18,7 +14,7 @@ def main():
     if faltando:
         sys.exit(f"Defina no ambiente: {', '.join(faltando)}")
     texto = (PASTA / "oris-realm.template.json").read_text(encoding="utf-8")
-    dados = json.loads(texto)  # valida o modelo
+    dados = json.loads(texto)
 
     def trocar(valor):
         if isinstance(valor, str):
@@ -33,7 +29,7 @@ def main():
     saida.mkdir(exist_ok=True)
     destino = saida / "oris-realm.json"
     destino.write_text(json.dumps(trocar(dados), ensure_ascii=False, indent=2), encoding="utf-8")
-    destino.chmod(0o644)  # o contêiner do Keycloak precisa ler
+    destino.chmod(0o644)
     print(f"Gerado {destino}")
 
 

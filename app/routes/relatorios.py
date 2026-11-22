@@ -1,17 +1,3 @@
-"""
-Relatórios (Requisito 4): download local em CSV e exportação para o
-Amazon S3.
-
-RBAC (sempre no backend):
-- baixar CSV: qualquer usuário autenticado (os mesmos dados já são
-  consultáveis nas listagens de Unidades/Serviços/Equipamentos);
-- exportar para a nuvem: só ADMINISTRADOR e GESTAO_INFORMACAO — enviar
-  dados da rede para fora do sistema é uma ação mais sensível.
-
-Toda geração/exportação é auditada (BAIXAR_RELATORIO /
-EXPORTAR_RELATORIO), na mesma transação.
-"""
-
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, session, url_for
 
 from app.extensions import db
@@ -48,9 +34,6 @@ def _validar_entidade_ou_404(entidade):
 
 
 def _montar_cartao_exportacao(dados):
-    """Cartão exibido uma única vez após exportar. Só a chave do objeto fica na
-    sessão (cookie pequeno); o link pré-assinado é gerado agora e nunca mostrado
-    por extenso, só atrás do botão."""
     if not dados:
         return None
     try:
@@ -104,7 +87,7 @@ def baixar(entidade):
         mimetype="text/csv",
         headers={
             "Content-Disposition": f"attachment; filename={nome_arquivo}",
-            "X-Content-SHA256": hash_conteudo,  # o destinatário confere com `sha256sum`
+            "X-Content-SHA256": hash_conteudo,
         },
     )
 
@@ -140,7 +123,7 @@ def exportar_s3(entidade):
     hash_conteudo = sha256_hex(conteudo)
     try:
         chave = enviar_relatorio(conteudo, entidade)
-        gerar_url_download(chave)  # valida que o link pode ser gerado antes de auditar
+        gerar_url_download(chave)
     except ArmazenamentoError as erro:
         flash(str(erro), "danger")
         return redirect(url_for("relatorios.index"))

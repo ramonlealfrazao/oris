@@ -1,16 +1,3 @@
-"""
-Geração de relatórios em CSV (Requisito 4 — relatórios a exportar).
-
-Três relatórios, um por entidade: unidades, serviços e equipamentos.
-O CSV sai em UTF-8 com BOM (abre direto no Excel com acentos).
-
-SEGURANÇA (SEC-008 de docs/SEGURANCA.md): como agora o ORIS GERA um
-arquivo com dados que vieram de planilhas importadas, toda célula de
-texto que começa com `=`, `+`, `-`, `@`, TAB ou CR recebe um apóstrofo
-na frente, neutralizando *formula injection* quando alguém abrir o
-arquivo no Excel/Sheets.
-"""
-
 import csv
 import io
 import re
@@ -28,7 +15,7 @@ def sanitizar_celula(valor):
         return ""
     if isinstance(valor, bool):
         return "SIM" if valor else "NAO"
-    if hasattr(valor, "value"):  # Enum
+    if hasattr(valor, "value"):
         valor = valor.value
     texto = str(valor)
     if texto.startswith(_PERIGOSOS):
@@ -74,9 +61,6 @@ _GERADORES = {
 
 
 def gerar_csv(entidade):
-    """Devolve (nome_do_arquivo, bytes). `entidade` precisa estar em
-    ENTIDADES_RELATORIO (quem chama valida; aqui um valor inválido
-    levanta ValueError)."""
     if entidade not in _GERADORES:
         raise ValueError("Entidade de relatório desconhecida.")
 
@@ -97,9 +81,6 @@ CABECALHO_HISTORICO = ["data_hora_utc", "relatorio", "exportado_por", "origem_ip
 
 
 def historico_exportacoes(limite=500):
-    """Linhas do histórico de exportações para o S3, lidas da trilha de
-    auditoria (EXPORTAR_RELATORIO). Não há tabela própria: a auditoria é a
-    fonte única e imutável."""
     registros = (
         Auditoria.query.filter_by(acao="EXPORTAR_RELATORIO", resultado="SUCESSO")
         .order_by(Auditoria.data_hora.desc(), Auditoria.id.desc())
@@ -123,7 +104,6 @@ def historico_exportacoes(limite=500):
 
 
 def gerar_csv_historico():
-    """Planilha (CSV com BOM, abre no Excel) com todas as exportações."""
     buffer = io.StringIO()
     escritor = csv.writer(buffer)
     escritor.writerow(CABECALHO_HISTORICO)

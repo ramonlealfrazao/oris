@@ -1,5 +1,3 @@
-"""DAO de Equipamentos - SQL explícito (PyMySQL / DB-API)."""
-
 from app.bd import dao_auditoria
 from app.bd.conexao import ErroBanco, consultar, consultar_um, transacao
 
@@ -57,7 +55,6 @@ def buscar(equipamento_id):
 
 
 def _validar_vinculo(dados):
-    """Se houver serviço, ele precisa ser da mesma unidade escolhida."""
     if not dados.get("servico_id"):
         return
     linha = consultar_um(SQL_UNIDADE_DO_SERVICO, (dados["servico_id"],))

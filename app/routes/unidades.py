@@ -1,5 +1,3 @@
-"""CRUD de Unidades de Saúde Bucal (Fase 5), com fluxo de aprovação integrado a partir da..."""
-
 from flask import Blueprint, abort, flash, redirect, render_template, url_for
 
 from app.extensions import db
@@ -18,7 +16,6 @@ PERFIS_QUE_ALTERAM_UNIDADES = (
 
 
 def _buscar_unidade_ou_404(unidade_id):
-    """Busca uma unidade pelo id ou aborta com 404 (tratado por uma página amigável - ver..."""
     unidade = db.session.get(Unidade, unidade_id)
     if unidade is None:
         abort(404)
@@ -26,7 +23,6 @@ def _buscar_unidade_ou_404(unidade_id):
 
 
 def _usuario_pode_alterar():
-    """Indica, só para a interface (esconder/mostrar botões), se o usuário atual pertence..."""
     usuario = usuario_atual()
     return usuario is not None and usuario.perfil.value in PERFIS_QUE_ALTERAM_UNIDADES
 

@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""Entrypoint do contêiner ORIS.
-
-Ordem: espera o MySQL -> cria/atualiza tabelas, funcoes, triggers e views ->
-(opcional) carrega os dados ficticios de demonstracao -> liga o gunicorn.
-Idempotente: pode reiniciar o contêiner quantas vezes quiser.
-
-Variaveis: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, SECRET_KEY (se vazia,
-e gerada a cada partida), ORIS_SEED (true/false; so carrega se o banco nao tem unidades).
-"""
 
 import os
 import re
@@ -77,7 +68,6 @@ def carregar_seed():
     con = conectar(multi=True)
     for seed in SEEDS:
         sql = (RAIZ / seed).read_text(encoding="utf-8")
-        # Os seeds trazem "USE oris_db;" fixo: aponta para o banco configurado.
         banco = os.environ.get("DB_NAME", "oris_db")
         if not re.fullmatch(r"[A-Za-z0-9_]+", banco):
             log("ERRO: DB_NAME invalido.")
@@ -94,8 +84,6 @@ def carregar_seed():
 
 
 def trocar_senha_demo():
-    """Se ORIS_DEMO_SENHA existir, os usuarios de demonstracao (@oris.example) passam a usar
-    essa senha em vez da senha publica do repositorio. Obrigatorio em hospedagem na internet."""
     senha = os.environ.get("ORIS_DEMO_SENHA", "")
     if not senha:
         return
@@ -125,7 +113,6 @@ def main():
     preparar_schema()
     carregar_seed()
     log("ligando o servidor em 0.0.0.0:5000")
-    # 1 worker + threads: o rate limit de login e em memoria e precisa ser unico.
     os.execvp("gunicorn", ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1",
                            "--threads", "4", "--access-logfile", "-", "run:app"])
 

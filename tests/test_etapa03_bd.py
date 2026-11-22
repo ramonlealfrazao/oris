@@ -1,5 +1,3 @@
-"""Testes da ETAPA 03 - módulo Banco de Dados (SQL explícito)."""
-
 import os
 import re
 

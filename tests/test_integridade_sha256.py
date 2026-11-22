@@ -1,12 +1,3 @@
-"""Integridade com SHA-256 (requisito de checksum em importação e exportação).
-
-- utilitário `app/utils/integridade.py` (vetores conhecidos do SHA-256);
-- download de relatório: cabeçalho X-Content-SHA256 para o destinatário conferir;
-- exportação ao S3: o S3 recebe ChecksumSHA256 e RECUSA o objeto se o conteúdo
-  chegar corrompido (verificação feita pelo provedor), além de metadado e auditoria;
-- importação: o hash do arquivo processado fica registrado na auditoria.
-"""
-
 import base64
 import hashlib
 
@@ -15,7 +6,6 @@ import pytest
 from app.models import Auditoria, PerfilUsuario
 from app.utils.integridade import sha256_arquivo, sha256_base64, sha256_hex
 
-# Importa as fixtures e helpers dos testes da Fase 14 (sem duplicar a montagem do app).
 from tests.test_fase14_diretorio_relatorios import (  # noqa: F401
     ClienteS3Falso,
     _dados_rede,
@@ -38,7 +28,7 @@ def test_sha256_base64_e_o_digest_em_base64():
 
 
 def test_sha256_arquivo_le_em_blocos_e_bate_com_o_conteudo(tmp_path):
-    dados = b"x" * (3 * 1024 * 1024 + 17)  # maior que um bloco de leitura
+    dados = b"x" * (3 * 1024 * 1024 + 17)
     caminho = tmp_path / "grande.bin"
     caminho.write_bytes(dados)
     assert sha256_arquivo(str(caminho)) == hashlib.sha256(dados).hexdigest()

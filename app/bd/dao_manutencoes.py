@@ -1,11 +1,3 @@
-"""DAO de Manutenções (Etapa 06) - SQL explícito (PyMySQL / DB-API).
-
-As regras de integridade (custo >= 0, conclusão >= abertura) e o efeito
-sobre a situação do equipamento ficam nos TRIGGERS do MySQL
-(database/etapa05_objetos.sql); a violação chega aqui como erro do
-driver, traduzido para ErroBanco.
-"""
-
 from app.bd import dao_auditoria
 from app.bd.conexao import ErroBanco, consultar, consultar_um, transacao
 
@@ -75,7 +67,6 @@ def _valores(dados):
 
 
 def _executar(cur, sql, parametros):
-    """Os triggers sinalizam violações de regra com SQLSTATE 45000."""
     try:
         cur.execute(sql, parametros)
     except Exception as erro:

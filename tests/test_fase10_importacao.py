@@ -1,5 +1,3 @@
-"""Testes da FASE 10 - importador de planilhas."""
-
 import io
 import os
 
@@ -68,12 +66,10 @@ MAPA_REDE = {
 
 def _linha_rede(unidade="N", equipamento="N", tipo_equip="", tipo_servico="", cnes="9999999",
                  mista="N", nome="", nome_curto="", ds="", endereco="", bairro="", ativo="S"):
-    """Monta uma linha no formato unificado, na ordem de CABECALHO_REDE, com valores..."""
     return [unidade, equipamento, tipo_equip, tipo_servico, cnes, mista, nome, nome_curto, ds, endereco, bairro, ativo]
 
 
 def _csv_bytes(linhas):
-    """`linhas` é uma lista de listas (cada uma uma linha da planilha, já incluindo o..."""
     conteudo = "\n".join(",".join(str(v) for v in linha) for linha in linhas) + "\n"
     return conteudo.encode("utf-8")
 
@@ -151,7 +147,6 @@ def _extrair_token(html):
 
 
 def _fluxo_completo_unidade_valida(client, linhas, mapa=None):
-    """Faz upload + mapeamento + validação de uma planilha de unidades válida, retornando..."""
     resp = _upload_e_mapear(client, _csv_bytes(linhas), "unidades.csv")
     token = _extrair_token(resp.get_data(as_text=True))
     resp = client.post(
@@ -162,7 +157,6 @@ def _fluxo_completo_unidade_valida(client, linhas, mapa=None):
 
 
 def _fluxo_completo_rede(client, linhas, mapa=None):
-    """Mesmo fluxo de `_fluxo_completo_unidade_valida`, mas para a     entidade "rede"..."""
     resp = _upload_e_mapear(client, _csv_bytes(linhas), "rede.csv", entidade="rede")
     token = _extrair_token(resp.get_data(as_text=True))
     resp = client.post(
@@ -399,7 +393,7 @@ def test_rejeicao_nao_altera_registro_original(client, app):
         assert ok is True
 
         unidade = Unidade.query.filter_by(cnes="9990001").first()
-        assert unidade.nome == "UBS Existente"  # nome original, não o da planilha
+        assert unidade.nome == "UBS Existente"
 
 
 def test_auditoria_e_gerada_corretamente(client, app):
@@ -470,7 +464,7 @@ def test_arquivo_temporario_e_removido_quando_validacao_falha(client):
     from app.routes.importacao import _caminho_do_token
 
     _login(client, PerfilUsuario.ADMINISTRADOR)
-    linhas = [CABECALHO_UNIDADES, ["", "1112238", "Recife", "PE", "ATIVA"]]  # nome ausente -> invalido
+    linhas = [CABECALHO_UNIDADES, ["", "1112238", "Recife", "PE", "ATIVA"]]
     resp = _upload_e_mapear(client, _csv_bytes(linhas), "unidades.csv")
     token = _extrair_token(resp.get_data(as_text=True))
     caminho = _caminho_do_token(token)
@@ -550,7 +544,6 @@ def test_rotas_da_aplicacao_continuam_registradas_apos_fase10(app):
 
 
 def _aprovar_todas_pendentes(app, tabela=None):
-    """Aprova, como ADMINISTRADOR, toda Alteracao PENDENTE (opcionalmente filtrando por..."""
     with app.app_context():
         aprovador = _usuario(app, PerfilUsuario.ADMINISTRADOR)
         query = Alteracao.query.filter_by(status="PENDENTE") if tabela is None else Alteracao.query.filter_by(status="PENDENTE", tabela=tabela)
@@ -664,7 +657,7 @@ def test_rede_equipamento_relacionado_a_servico_ambiguo_gera_aviso_sem_erro(clie
     with app.app_context():
         equipamento = Equipamento.query.filter_by(nome="Aparelho de Fisioterapia").first()
         assert equipamento is not None
-        assert equipamento.servico_id is None  # ambíguo -> sem vínculo automático, não é erro
+        assert equipamento.servico_id is None
 
 
 def test_rede_unidade_com_multiplos_servicos(client, app):
@@ -757,7 +750,7 @@ def test_rede_fluxo_de_aprovacao_apos_importacao(client, app):
 
         solicitante = _usuario(app, PerfilUsuario.RESPONSAVEL_SAUDE_BUCAL)
         ok, mensagem = aprovar_alteracao(alteracao, solicitante)
-        assert ok is False  # segregação de funções também vale para a importação "rede"
+        assert ok is False
 
         aprovador = _usuario(app, PerfilUsuario.ADMINISTRADOR)
         ok, _ = aprovar_alteracao(alteracao, aprovador)
@@ -792,7 +785,7 @@ def test_rede_confirmacao_com_revalidacao_invalida_nao_grava_nada(client, app):
         antes = Alteracao.query.count()
 
     mapa_quebrado = dict(MAPA_REDE)
-    mapa_quebrado["mapa_cnes"] = ""  # desmapeia CNES -> linha fica inválida na revalidação
+    mapa_quebrado["mapa_cnes"] = ""
     resp = _confirmar_rede(client, token, mapa=mapa_quebrado, follow_redirects=True)
     assert resp.status_code == 200
     assert "mudaram" in resp.get_data(as_text=True).lower() or "novamente" in resp.get_data(as_text=True).lower()

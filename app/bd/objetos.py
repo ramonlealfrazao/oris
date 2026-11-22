@@ -1,15 +1,3 @@
-"""Funções, procedimentos, triggers e views do MySQL (Etapas 05/06).
-
-O código-fonte dos objetos fica em database/etapa05_objetos.sql. Este
-módulo:
-  * lê o arquivo e o divide em comandos (separador: linha "$$");
-  * cria os objetos no banco (usado por database/aplicar_migracoes.py);
-  * executa funções e procedimentos pela interface, SEMPRE com parâmetros
-    do driver (%s) - o nome do objeto só vem do catálogo abaixo (lista
-    branca), nunca do usuário;
-  * lista os objetos existentes e os efeitos dos triggers.
-"""
-
 import os
 import re
 
@@ -29,9 +17,6 @@ SQL_ROTINAS = (
 SQL_TRIGGERS = "SELECT TRIGGER_NAME AS nome FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()"
 SQL_VIEWS = "SELECT TABLE_NAME AS nome FROM information_schema.VIEWS WHERE TABLE_SCHEMA = DATABASE()"
 
-# --------------------------------------------------------------------------
-# Catálogo (lista branca) - o que a tela pode executar.
-# --------------------------------------------------------------------------
 FUNCOES = {
     "fn_pct_equip_operantes": {
         "titulo": "Percentual de equipamentos operantes",
@@ -110,17 +95,12 @@ VIEWS = {
 }
 
 
-# --------------------------------------------------------------------------
-# Leitura / aplicação do script SQL
-# --------------------------------------------------------------------------
 def ler_comandos(caminho=ARQUIVO_SQL):
-    """Divide o arquivo em comandos (separador: ' $$' no fim de um comando)."""
     with open(caminho, encoding="utf-8") as arq:
         texto = arq.read()
     comandos = []
     for bloco in re.split(r"\s*\$\$[ \t]*(?:\r?\n|$)", texto):
         conteudo = bloco.strip()
-        # descarta comentários de cabeçalho que antecedem o comando
         while conteudo.startswith("--"):
             conteudo = conteudo.split("\n", 1)[1].lstrip() if "\n" in conteudo else ""
         if conteudo:
@@ -129,7 +109,6 @@ def ler_comandos(caminho=ARQUIVO_SQL):
 
 
 def codigo_fonte(nome):
-    """Devolve o CREATE (texto) do objeto `nome` a partir do arquivo."""
     padrao = rf"CREATE\s+(OR\s+REPLACE\s+)?(FUNCTION|PROCEDURE|TRIGGER|VIEW)\s+{re.escape(nome)}\b"
     for comando in ler_comandos():
         if re.match(padrao, comando, flags=re.IGNORECASE):
@@ -137,8 +116,6 @@ def codigo_fonte(nome):
     return ""
 
 
-# Com o log binário ligado, criar FUNÇÃO ou TRIGGER exige log_bin_trust_function_creators=1
-# ou o privilégio SUPER (erro 1419). Procedimentos e views não dependem disso.
 SQL_PODE_CRIAR_FUNCOES_E_TRIGGERS = (
     "SELECT @@global.log_bin = 0 OR @@global.log_bin_trust_function_creators = 1 "
     "OR EXISTS (SELECT 1 FROM information_schema.USER_PRIVILEGES "
@@ -148,7 +125,6 @@ SQL_PODE_CRIAR_FUNCOES_E_TRIGGERS = (
 
 
 def _e_funcao_ou_trigger(sql):
-    """True para DROP/CREATE de FUNCTION ou TRIGGER (os que o erro 1419 barra)."""
     primeira = " ".join(sql.split()[:3]).upper()
     return any(f"{verbo} {tipo}" in primeira for verbo in ("DROP", "CREATE") for tipo in ("FUNCTION", "TRIGGER"))
 
@@ -160,26 +136,18 @@ def _pode_criar_funcoes_e_triggers(cur):
         valor = linha[0] if not isinstance(linha, dict) else next(iter(linha.values()))
         return bool(valor)
     except Exception:
-        return True  # na dúvida tenta; o tratamento do 1419 abaixo continua valendo
+        return True
 
 
 def aplicar_objetos(conexao=None):
-    """Cria/recria os objetos, um comando por vez. Devolve (aplicados, ignorados).
-
-    Funções, procedimentos e triggers exigem, com o log binário ligado, o ajuste
-    `log_bin_trust_function_creators=1` feito por um administrador (erro 1419);
-    nesse caso o comando é ignorado e a lista `ignorados` o informa. As views
-    não dependem disso e sempre são criadas."""
     propria = conexao is None
     conexao = conexao or abrir_conexao()
     aplicados, ignorados = 0, []
     try:
         with conexao.cursor() as cur:
             pode = _pode_criar_funcoes_e_triggers(cur)
-            for sql in ler_comandos():  # DDL vindo do arquivo versionado do repositório
+            for sql in ler_comandos():
                 if not pode and _e_funcao_ou_trigger(sql):
-                    # NÃO apaga o que existe se não vai conseguir recriar: antes, o
-                    # DROP passava e o CREATE falhava, e o banco ficava sem os triggers.
                     primeira = sql.splitlines()[0]
                     if not primeira.upper().startswith("DROP"):
                         ignorados.append(primeira.split("(")[0].strip())
@@ -200,11 +168,7 @@ def aplicar_objetos(conexao=None):
             conexao.close()
 
 
-# --------------------------------------------------------------------------
-# Execução pela interface
-# --------------------------------------------------------------------------
 def _traduzir(erro):
-    """Mensagem amigável a partir do SIGNAL (45000) ou de erro do MySQL."""
     args = getattr(erro, "args", ())
     if len(args) >= 2:
         return str(args[1])
@@ -212,20 +176,17 @@ def _traduzir(erro):
 
 
 def executar_funcao(nome, valores):
-    """Executa uma função catalogada. `valores` já validados (tuple)."""
     cfg = FUNCOES.get(nome)
     if cfg is None:
         raise ErroBanco("Função desconhecida.")
     try:
         _, linhas = consultar(cfg["sql"], valores)
-    except Exception as erro:  # pymysql.err.*
+    except Exception as erro:
         raise ErroBanco(_traduzir(erro)) from erro
     return linhas[0]["resultado"] if linhas else None
 
 
 def chamar_procedimento(nome, valores, usuario_id):
-    """CALL de um procedimento catalogado, em transação, com o usuário
-    responsável disponível aos triggers. Devolve (colunas, linhas)."""
     cfg = PROCEDIMENTOS.get(nome)
     if cfg is None:
         raise ErroBanco("Procedimento desconhecido.")
@@ -233,7 +194,7 @@ def chamar_procedimento(nome, valores, usuario_id):
         with transacao() as cur:
             cur.execute(SQL_DEFINIR_USUARIO, (usuario_id,))
             cur.execute(cfg["sql"], valores)
-            if nome == "sp_abrir_manutencao":  # parâmetro OUT -> variável de sessão
+            if nome == "sp_abrir_manutencao":
                 cur.execute(SQL_LER_NOVA_MANUTENCAO)
                 return ["manutencao_id"], list(cur.fetchall())
             linhas = list(cur.fetchall() or [])
@@ -245,11 +206,7 @@ def chamar_procedimento(nome, valores, usuario_id):
         raise ErroBanco(_traduzir(erro)) from erro
 
 
-# --------------------------------------------------------------------------
-# Inspeção do banco
-# --------------------------------------------------------------------------
 def objetos_existentes():
-    """Nomes de funções/procedimentos/triggers/views realmente criados no schema atual."""
     _, rotinas = consultar(SQL_ROTINAS)
     _, triggers = consultar(SQL_TRIGGERS)
     _, views = consultar(SQL_VIEWS)
@@ -271,6 +228,5 @@ SQL_EFEITOS_TRIGGERS = """
 
 
 def efeitos_triggers():
-    """Últimas linhas de auditoria geradas automaticamente pelos triggers."""
     _, linhas = consultar(SQL_EFEITOS_TRIGGERS)
     return linhas

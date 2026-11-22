@@ -1,35 +1,18 @@
-/*
- * ORIS - Estrutura Global (Fase 13B, Etapa 1)
- * ---------------------------------------------------------------
- * Sidebar + Header + Conteúdo, construído sobre os tokens da
- * Fase 13A. Puramente visual/estrutural - nenhuma lógica de negócio
- * aqui, só apresentação.
- *
- * O menu mobile usa a técnica do "checkbox hack" (um <input
- * type="checkbox"> oculto + <label for="..."> como botão) para abrir
- * e fechar a sidebar sem nenhum JavaScript - mantém a CSP restrita
- * (sem scripts adicionais) e a página seguindo o modelo tradicional
- * de navegação do Flask.
- */
-
-/* ---- Estrutura geral -------------------------------------------- */
-
 .oris-app {
     display: flex;
     min-height: 100vh;
 }
 
-/* Checkbox de controle do menu mobile - nunca visível. */
+
 .oris-sidebar-toggle {
     display: none;
 }
 
-/* ---- Sidebar ------------------------------------------------------ */
 
 .oris-sidebar {
     width: var(--oris-sidebar-width);
     flex-shrink: 0;
-    background-color: var(--oris-navy); /* fallback para navegadores/motores sem suporte a gradiente moderno */
+    background-color: var(--oris-navy);
     background: linear-gradient(180deg, var(--oris-navy), var(--oris-blue));
     color: var(--oris-text-on-dark);
     position: sticky;
@@ -179,7 +162,6 @@
     color: var(--oris-navy);
 }
 
-/* ---- Área principal (header + conteúdo) ---------------------------- */
 
 .oris-main {
     flex: 1;
@@ -237,7 +219,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0; /* permite o flex item encolher e o ellipsis funcionar de verdade */
+    min-width: 0;
 }
 
 .oris-breadcrumb a {
@@ -328,7 +310,6 @@
     color: var(--oris-text-muted);
 }
 
-/* ---- Backdrop do menu mobile ----------------------------------------- */
 
 .oris-sidebar-backdrop {
     display: none;
@@ -338,12 +319,10 @@
     z-index: 1020;
 }
 
-/* ---- Responsividade --------------------------------------------------- */
 
 @media (max-width: 991.98px) {
     .oris-sidebar {
-        /* fixed: fora do fluxo flex - antes, a sidebar escondida (sticky)
-           continuava ocupando a largura e espremia o conteúdo no celular */
+
         position: fixed;
         left: 0;
         top: 0;
@@ -358,7 +337,7 @@
         display: inline-flex;
     }
 
-    /* Checkbox marcado -> sidebar entra na tela e o backdrop aparece. */
+
     .oris-sidebar-toggle:checked ~ .oris-sidebar {
         transform: translateX(0);
         box-shadow: var(--oris-shadow-md);
@@ -379,14 +358,10 @@
     }
 
     .oris-user-info {
-        display: none; /* mantém só o avatar em telas muito pequenas */
+        display: none;
     }
 
-    /* Breadcrumb em telas muito estreitas: mostra só a página atual,
-       para nunca disputar espaço com a identidade do usuário — um
-       padrão comum de breadcrumb responsivo (não é possível truncar
-       bem com ellipsis quando o breadcrumb tem vários links/spans
-       como filhos separados). */
+
     .oris-breadcrumb a,
     .oris-breadcrumb span:not(.oris-breadcrumb-current) {
         display: none;

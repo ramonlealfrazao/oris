@@ -1,5 +1,3 @@
-"""Ponto de entrada da aplicação ORIS."""
-
 from app import create_app
 
 app = create_app()

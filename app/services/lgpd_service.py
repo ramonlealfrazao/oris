@@ -1,5 +1,3 @@
-"""Direitos do titular de dados (LGPD, art. 18) e dados de transparência."""
-
 import json
 import secrets
 from datetime import timedelta
@@ -142,7 +140,6 @@ def dados_do_titular(usuario):
             "ativo": usuario.ativo,
             "origem": usuario.origem.value,
             "grupos": sorted(g.nome for g in usuario.grupos),
-            # Só a situação: o segredo TOTP e os códigos de recuperação nunca são exportados.
             "mfa_ativo": bool(usuario.mfa_ativo),
             "criado_em": _iso(usuario.created_at),
             "atualizado_em": _iso(usuario.updated_at),
@@ -229,7 +226,6 @@ def e_ultimo_administrador_ativo(usuario):
 
 
 def anonimizar_titular(usuario, administrador):
-    """Remove os dados pessoais da conta; a trilha de auditoria permanece ligada ao id."""
     if e_ultimo_administrador_ativo(usuario):
         raise ValueError("Esta conta é a do único Administrador ativo e não pode ser anonimizada.")
     nome_anterior, email_anterior = usuario.nome, usuario.email
@@ -239,7 +235,6 @@ def anonimizar_titular(usuario, administrador):
     usuario.identificador_externo = None
     usuario.grupos = []
     usuario.ativo = False
-    # O segredo do MFA e os códigos de recuperação também são dados da pessoa.
     usuario.mfa_ativo = False
     usuario.mfa_segredo = None
     usuario.mfa_ultimo_passo = None
@@ -260,7 +255,6 @@ def solicitacao_vencida(solicitacao):
 
 
 def resumo_conformidade():
-    """Números usados na área de governança."""
     agora = utcnow()
     limite = agora - timedelta(days=365 * retencao_anos())
     abertas = SolicitacaoTitular.query.filter_by(status=StatusSolicitacaoTitular.ABERTA)

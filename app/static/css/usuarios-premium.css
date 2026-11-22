@@ -1,20 +1,3 @@
-/*
- * ORIS - Usuários "Premium" (Stage 6, redesign visual)
- * ---------------------------------------------------------------
- * Camada de estilo EXCLUSIVA das telas de Usuários (lista + form),
- * carregada só nelas via {% block extra_css %} - não afeta nenhuma
- * outra tela do sistema. Construída sobre os tokens já existentes em
- * tokens.css e seguindo o mesmo padrão visual já aplicado em
- * importacao-premium.css (Stage 5): glassmorphism sutil, gradiente
- * navy → petróleo → turquesa, profundidade e microinterações
- * discretas. Sem neon, sem glow exagerado, sem excesso de 3D.
- *
- * Todas as classes aqui usam o prefixo "oris-users-" para nunca
- * colidir com o Design System global.
- */
-
-/* ---- Hero da listagem -------------------------------------------- */
-
 .oris-users-hero {
     position: relative;
     overflow: hidden;
@@ -78,7 +61,7 @@
     color: var(--oris-navy);
 }
 
-/* Ícone decorativo de segurança/identidade, sutil, no hero */
+
 .oris-users-hero-icon {
     opacity: 0.85;
     position: relative;
@@ -91,7 +74,6 @@
     }
 }
 
-/* ---- Cards de resumo (glassmorphism) ------------------------------ */
 
 .oris-users-summary {
     display: grid;
@@ -161,7 +143,6 @@
     font-weight: 600;
 }
 
-/* ---- Painel de filtros (vidro) ------------------------------------- */
 
 .oris-users-filters {
     border-radius: var(--oris-radius-lg);
@@ -174,7 +155,6 @@
     margin-bottom: 1.25rem;
 }
 
-/* ---- Lista de usuários: linhas premium ----------------------------- */
 
 .oris-users-list {
     display: flex;
@@ -256,7 +236,6 @@
     margin-left: auto;
 }
 
-/* ---- Badges de perfil (chips) --------------------------------------- */
 
 .oris-users-chip {
     display: inline-flex;
@@ -291,7 +270,6 @@
     border: 1px solid var(--oris-border);
 }
 
-/* ---- Status: nunca só cor - sempre ícone + texto -------------------- */
 
 .oris-users-status {
     display: inline-flex;
@@ -313,7 +291,6 @@
     color: var(--oris-text-muted);
 }
 
-/* ---- Formulário: seções em vidro ------------------------------------- */
 
 .oris-users-form-section {
     border-radius: var(--oris-radius-lg);
@@ -343,7 +320,6 @@
     font-size: 1rem;
 }
 
-/* ---- Responsividade -------------------------------------------------- */
 
 @media (max-width: 767.98px) {
     .oris-users-hero {
@@ -355,11 +331,7 @@
         align-items: flex-start;
     }
 
-    /* Em coluna, o eixo principal do flex passa a ser o vertical —
-       os flex-basis pensados para a largura no layout horizontal
-       (220px/260px) virariam altura aqui e criariam espaços em
-       branco enormes. Neutraliza isso para as caixas ocuparem só a
-       altura do próprio conteúdo. */
+
     .oris-users-row-identity,
     .oris-users-row-meta {
         flex: 0 0 auto;

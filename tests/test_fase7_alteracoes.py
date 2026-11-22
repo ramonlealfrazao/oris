@@ -1,5 +1,3 @@
-"""Testes da FASE 7 - fluxo de alterações + aprovação."""
-
 import pytest
 
 from app import create_app
@@ -353,7 +351,6 @@ def test_alteracao_relacionada_a_equipamento(client, app):
 
 
 def test_rollback_ao_aprovar_alteracao_com_conflito_de_dados(client, app):
-    """CONTRATO ATUALIZADO (Stage "modelo de dados")"""
     _login(client, PerfilUsuario.RESPONSAVEL_SAUDE_BUCAL)
 
     dados_a = dict(DADOS_UNIDADE_NOVA)
@@ -366,7 +363,7 @@ def test_rollback_ao_aprovar_alteracao_com_conflito_de_dados(client, app):
             "unidades",
             None,
             "CRIAR",
-            {"cnes": "9990001", "situacao": "ATIVA"},  # sem "nome" -> NOT NULL
+            {"cnes": "9990001", "situacao": "ATIVA"},
             "Alteração deliberadamente inválida para testar rollback",
         )
 

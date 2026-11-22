@@ -1,5 +1,3 @@
-"""Tela do Diretório LDAP (Requisito 3 pela interface): simular e sincronizar com botões."""
-
 import pytest
 
 from app import create_app
@@ -85,9 +83,8 @@ def test_sincronizar_grava_tabelas_locais_e_audita(client, app):
         ana = Usuario.query.filter_by(email="ana@rede.gov").one()
         assert ana.origem == OrigemDiretorio.LDAP and ana.perfil == PerfilUsuario.ADMINISTRADOR
         assert [g.nome for g in ana.grupos] == ["oris-admin"]
-        assert Usuario.query.filter_by(email="eva@rede.gov").first() is None  # sem grupo: não entra
+        assert Usuario.query.filter_by(email="eva@rede.gov").first() is None
         assert Auditoria.query.filter_by(acao="SINCRONIZAR_LDAP").count() == 1
-    # a lista "Contas que vieram do LDAP" passa a mostrar as duas
     assert "davi@rede.gov" in client.get("/usuarios/diretorio").get_data(as_text=True)
 
 

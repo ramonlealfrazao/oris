@@ -1,5 +1,3 @@
-"""Formulários da aplicação ORIS."""
-
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, SelectField, StringField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length, Regexp, ValidationError
@@ -8,7 +6,6 @@ CNES_REGEX = r"^\d{7,15}$"
 
 
 def _descricao_situacao_obrigatoria(form, field):
-    """Exige justificativa quando uma entidade não está ativa."""
     situacao = form.situacao.data
     if situacao in {"INATIVA", "INATIVO", "MANUTENCAO"} and not (field.data or "").strip():
         raise ValidationError("Informe a descrição para essa situação.")
@@ -30,8 +27,6 @@ class LoginForm(FlaskForm):
 
 
 class MfaCodigoForm(FlaskForm):
-    """Segunda etapa do login: código de 6 dígitos do aplicativo ou código de recuperação."""
-
     codigo = StringField(
         "Código",
         validators=[DataRequired(message="Informe o código."), Length(min=6, max=20, message="Código inválido.")],
@@ -40,8 +35,6 @@ class MfaCodigoForm(FlaskForm):
 
 
 class UnidadeForm(FlaskForm):
-    """Formulário de cadastro/edição de Unidade de Saúde Bucal."""
-
     nome = StringField(
         "Nome",
         validators=[DataRequired(message="Informe o nome da unidade."), Length(max=200)],
@@ -98,8 +91,6 @@ class UnidadeForm(FlaskForm):
 
 
 class AlterarSituacaoForm(FlaskForm):
-    """Formulário simples, usado só para alterar a situação de uma unidade já existente..."""
-
     situacao = SelectField(
         "Nova situação",
         choices=[
@@ -117,15 +108,12 @@ class AlterarSituacaoForm(FlaskForm):
 
 
 def _coerce_opcional_int(valor):
-    """Converte o valor de um SelectField para int, tratando string vazia (opção..."""
     if valor in (None, "", "None"):
         return None
     return int(valor)
 
 
 class ServicoForm(FlaskForm):
-    """Formulário de cadastro/edição de Serviço de Saúde Bucal."""
-
     nome = StringField(
         "Nome",
         validators=[DataRequired(message="Informe o nome do serviço."), Length(max=150)],
@@ -153,8 +141,6 @@ class ServicoForm(FlaskForm):
 
 
 class EquipamentoForm(FlaskForm):
-    """Formulário de cadastro/edição de Equipamento."""
-
     nome = StringField(
         "Nome",
         validators=[DataRequired(message="Informe o nome do equipamento."), Length(max=150)],
@@ -194,8 +180,6 @@ class EquipamentoForm(FlaskForm):
 
 
 class AlterarSituacaoAtivoInativoForm(FlaskForm):
-    """Formulário para alterar a situação de um Serviço ou Equipamento."""
-
     situacao = SelectField(
         "Nova situação",
         choices=[("ATIVO", "Ativo"), ("INATIVO", "Inativo"), ("MANUTENCAO", "Manutenção")],
@@ -209,15 +193,11 @@ class AlterarSituacaoAtivoInativoForm(FlaskForm):
 
 
 class AcaoAlteracaoForm(FlaskForm):
-    """Formulário mínimo, usado só para dar proteção CSRF aos botões de aprovar/rejeitar..."""
-
     motivo_rejeicao = TextAreaField("Descrição", validators=[Length(max=2000)])
     submit = SubmitField("Confirmar")
 
 
 class CriarUsuarioForm(FlaskForm):
-    """Formulário de criação de usuário (Fase 11 - Administração de Usuários)."""
-
     nome = StringField(
         "Nome",
         validators=[DataRequired(message="Informe o nome."), Length(max=150)],
@@ -262,8 +242,6 @@ class CriarUsuarioForm(FlaskForm):
 
 
 class EditarUsuarioForm(FlaskForm):
-    """Formulário de edição de usuário - só nome, email e perfil."""
-
     nome = StringField(
         "Nome",
         validators=[DataRequired(message="Informe o nome."), Length(max=150)],
@@ -293,8 +271,6 @@ class EditarUsuarioForm(FlaskForm):
 
 
 class RedefinirSenhaForm(FlaskForm):
-    """Formulário mínimo para o ADMINISTRADOR definir uma nova senha para outro usuário..."""
-
     nova_senha = PasswordField(
         "Nova senha",
         validators=[

@@ -1,5 +1,3 @@
-"""Comando de linha de comando (Flask CLI) para criar usuários."""
-
 import click
 from flask.cli import with_appcontext
 
@@ -86,7 +84,6 @@ def criptografar_alteracoes_legadas_command():
 
 
 def register_cli_commands(app):
-    """Registra os comandos de CLI customizados na aplicação Flask."""
     app.cli.add_command(criar_usuario_command)
     app.cli.add_command(sincronizar_ldap_command)
     app.cli.add_command(criptografar_alteracoes_legadas_command)

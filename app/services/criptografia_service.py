@@ -1,5 +1,3 @@
-"""Criptografia autenticada para dados sensíveis armazenados pelo ORIS."""
-
 from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
 
@@ -7,7 +5,7 @@ PREFIXO_TEXTO_CIFRADO = "oris-fernet-v1:"
 
 
 class DadosCifradosInvalidos(Exception):
-    """O conteúdo cifrado foi alterado ou não corresponde à chave configurada."""
+    pass
 
 
 def _cifrador(chave=None):
@@ -23,7 +21,6 @@ def _cifrador(chave=None):
 
 
 def validar_chave(chave):
-    """Valida a chave durante a inicialização, antes de aceitar dados."""
     _cifrador(chave)
 
 

@@ -1,5 +1,3 @@
-"""Testes da FASE 13B - Stage 2B (UX/UI de Serviços e Equipamentos)."""
-
 import pytest
 
 from app import create_app
@@ -159,16 +157,16 @@ def test_equipamento_inexistente_retorna_404(client):
 def test_indicadores_de_servicos_batem_com_dados_reais(client):
     _login(client, PerfilUsuario.ADMINISTRADOR)
     html = client.get("/servicos").get_data(as_text=True)
-    assert ">3<" in html  # total (2 na unidade A + 1 na unidade B)
-    assert ">2<" in html  # ativos
-    assert ">1<" in html  # inativos
+    assert ">3<" in html
+    assert ">2<" in html
+    assert ">1<" in html
 
 
 def test_indicadores_de_equipamentos_batem_com_dados_reais(client):
     _login(client, PerfilUsuario.ADMINISTRADOR)
     html = client.get("/equipamentos").get_data(as_text=True)
-    assert ">2<" in html  # total
-    assert ">1<" in html  # ativos e inativos (ambos 1)
+    assert ">2<" in html
+    assert ">1<" in html
 
 
 def test_lista_servicos_vazia_mostra_estado_vazio(client, app):
@@ -296,7 +294,6 @@ def test_criacao_de_equipamento_continua_gerando_alteracao_pendente(client, app)
 
 
 def test_fluxo_completo_de_aprovacao_de_servico(client, app):
-    """Solicitante não aprova a própria alteração; outro usuário aprova; aplica; audita."""
     _login(client, PerfilUsuario.RESPONSAVEL_SAUDE_BUCAL)
     unidade_id = _id(app, Unidade, nome="UBS Alfa")
     client.post("/servicos/novo", data={"nome": "Servico Fluxo", "unidade_id": unidade_id, "situacao": "ATIVO"})
@@ -307,7 +304,7 @@ def test_fluxo_completo_de_aprovacao_de_servico(client, app):
         aprovador = Usuario.query.filter_by(email=EMAILS[PerfilUsuario.ADMINISTRADOR]).first()
 
         ok, _ = aprovar_alteracao(alteracao, solicitante)
-        assert ok is False  # não pode aprovar a própria
+        assert ok is False
 
         ok, _ = aprovar_alteracao(alteracao, aprovador)
         assert ok is True
@@ -323,7 +320,7 @@ def test_fluxo_completo_de_aprovacao_de_servico(client, app):
 def test_equipamento_com_servico_de_outra_unidade_e_bloqueado(client, app):
     _login(client, PerfilUsuario.ADMINISTRADOR)
     unidade_a_id = _id(app, Unidade, nome="UBS Alfa")
-    servico_outra_unidade_id = _id(app, Servico, nome="Endodontia")  # pertence à UBS Beta
+    servico_outra_unidade_id = _id(app, Servico, nome="Endodontia")
 
     resp = client.post(
         "/equipamentos/novo",

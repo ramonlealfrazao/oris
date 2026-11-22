@@ -1,5 +1,3 @@
-"""Testes da FASE 5 - CRUD de Unidades."""
-
 import pytest
 
 from app import create_app
@@ -220,7 +218,7 @@ def test_administrador_solicita_alteracao_de_situacao(client, app):
 
     with app.app_context():
         unidade = db.session.get(Unidade, unidade_id)
-        assert unidade.situacao == SituacaoUnidade.ATIVA  # ainda não mudou
+        assert unidade.situacao == SituacaoUnidade.ATIVA
 
         alteracao = Alteracao.query.filter_by(tabela="unidades", operacao="ALTERAR_SITUACAO").first()
         assert alteracao is not None
@@ -317,7 +315,7 @@ def test_cnes_duplicado_e_rejeitado_no_cadastro(client, app):
     _login(client, PerfilUsuario.ADMINISTRADOR)
 
     dados_duplicados = dict(DADOS_UNIDADE_NOVA)
-    dados_duplicados["cnes"] = "1234567"  # já usado pela unidade de exemplo
+    dados_duplicados["cnes"] = "1234567"
 
     resp = client.post("/unidades/nova", data=dados_duplicados, follow_redirects=True)
     assert resp.status_code == 200
@@ -345,7 +343,7 @@ def test_cnes_duplicado_e_rejeitado_na_edicao(client, app):
         segunda_unidade_id = segunda_unidade.id
 
     dados_editados = dict(DADOS_UNIDADE_NOVA)
-    dados_editados["cnes"] = "1234567"  # CNES da primeira unidade
+    dados_editados["cnes"] = "1234567"
 
     resp = client.post(f"/unidades/{segunda_unidade_id}/editar", data=dados_editados, follow_redirects=True)
     assert resp.status_code == 200
@@ -398,5 +396,5 @@ def test_situacao_invalida_e_rejeitada_ao_alterar(client, app):
 
     with app.app_context():
         unidade = db.session.get(Unidade, unidade_id)
-        assert unidade.situacao == SituacaoUnidade.ATIVA  # não mudou
+        assert unidade.situacao == SituacaoUnidade.ATIVA
         assert Alteracao.query.filter_by(tabela="unidades", operacao="ALTERAR_SITUACAO").first() is None

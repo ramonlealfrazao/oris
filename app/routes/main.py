@@ -1,5 +1,3 @@
-"""Rotas principais da aplicação, após o login."""
-
 from flask import Blueprint, render_template
 
 from app.utils.decorators import login_required, usuario_atual

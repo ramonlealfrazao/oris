@@ -1,5 +1,3 @@
-"""Testes das melhorias de usabilidade (textos, perfil por extenso, diff de edição, login)."""
-
 import pytest
 
 from app import create_app

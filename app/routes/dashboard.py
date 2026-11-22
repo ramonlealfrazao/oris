@@ -1,5 +1,3 @@
-"""Dashboard do ORIS (Fase 9)."""
-
 from flask import Blueprint, render_template, request
 
 from app.models import PerfilUsuario

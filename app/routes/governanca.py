@@ -1,5 +1,3 @@
-"""Área de Governança: ISO 38500, riscos, RACI, COBIT, auditoria, ética e nuvem."""
-
 from flask import Blueprint, abort, render_template
 
 from app.services import governanca_dados as dados

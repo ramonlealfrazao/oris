@@ -1,5 +1,3 @@
-"""Painel estatístico - consultas SQL explícitas + estatística descritiva."""
-
 import statistics
 
 from app.bd.conexao import consultar, consultar_um

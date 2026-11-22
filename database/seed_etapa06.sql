@@ -1,8 +1,3 @@
--- ORIS - Etapa 06 - Historico FICTICIO de manutencoes (gerado por scripts/gerar_seed_etapa06.py)
--- Pre-requisitos: tabela manutencoes e objetos da Etapa 05 criados
--- (python database/aplicar_migracoes.py) e database/seed_etapa03.sql carregado.
--- ATENCAO: limpa manutencoes antes de inserir. Apenas para desenvolvimento/apresentacao.
-
 SET NAMES utf8mb4;
 DELETE FROM manutencoes;
 ALTER TABLE manutencoes AUTO_INCREMENT = 1;

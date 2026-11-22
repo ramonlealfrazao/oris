@@ -1,6 +1,3 @@
-# ORIS - app + MySQL 8. Subir:  docker compose up --build
-# Abrir: http://localhost:5000  (login demo: admin.demo@oris.example / Oris@2026)
-# Parar: docker compose down        Zerar o banco: docker compose down -v
 services:
   db:
     image: mysql:8.0
@@ -10,7 +7,6 @@ services:
       MYSQL_USER: oris_user
       MYSQL_PASSWORD: ${DB_PASSWORD:-oris-demo-troque}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root-demo-troque}
-    # Necessario no MySQL 8 (binlog ligado) para o usuario da app criar triggers/funcoes.
     command:
       - --log-bin-trust-function-creators=1
       - --character-set-server=utf8mb4
@@ -23,7 +19,6 @@ services:
       timeout: 5s
       retries: 30
       start_period: 20s
-    # Sem "ports": o banco NAO e exposto ao computador, so a app o alcanca.
 
   app:
     build: .
@@ -39,10 +34,7 @@ services:
       DB_USER: oris_user
       DB_PASSWORD: ${DB_PASSWORD:-oris-demo-troque}
       SECRET_KEY: ${SECRET_KEY:-}
-      # Se vazia, o entrypoint gera uma so para esta execucao (demonstracao local).
       DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
-      # Demonstracao em http://localhost: sem HTTPS o cookie "Secure" nao funcionaria.
-      # Em producao REAL (atras de HTTPS) use SESSION_COOKIE_SECURE=true.
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       ORIS_SEED: ${ORIS_SEED:-true}
     ports:

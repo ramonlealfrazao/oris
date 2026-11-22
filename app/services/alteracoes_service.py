@@ -1,5 +1,3 @@
-"""Serviço central do fluxo de aprovação de alterações (Fase 7), agora integrado à..."""
-
 import json
 
 from app.extensions import db
@@ -18,7 +16,6 @@ TABELA_MODELOS = {
 
 
 def registrar_alteracao(usuario, tabela, registro_id, operacao, dados_novos, descricao):
-    """Cria e salva uma Alteracao com status PENDENTE, e audita a solicitação (ação..."""
     alteracao = Alteracao(
         usuario_id=usuario.id,
         tabela=tabela,
@@ -29,7 +26,7 @@ def registrar_alteracao(usuario, tabela, registro_id, operacao, dados_novos, des
         status=StatusAlteracao.PENDENTE,
     )
     db.session.add(alteracao)
-    db.session.flush()  # obtém alteracao.id para referenciar na auditoria
+    db.session.flush()
 
     registrar_auditoria(
         usuario=usuario,
@@ -44,7 +41,6 @@ def registrar_alteracao(usuario, tabela, registro_id, operacao, dados_novos, des
 
 
 def ler_dados_novos(alteracao_ou_valor):
-    """Decifra dados novos; mantém leitura das solicitações antigas em texto simples."""
     valor = getattr(alteracao_ou_valor, "dados_novos", alteracao_ou_valor)
     if not valor:
         return {}
@@ -52,7 +48,6 @@ def ler_dados_novos(alteracao_ou_valor):
 
 
 def criptografar_alteracoes_existentes():
-    """Cifra solicitações legadas em texto simples e devolve a quantidade alterada."""
     alteracoes = Alteracao.query.filter(Alteracao.dados_novos.isnot(None)).yield_per(100)
     quantidade = 0
     for alteracao in alteracoes:
@@ -65,7 +60,6 @@ def criptografar_alteracoes_existentes():
 
 
 def _aplicar_alteracao(alteracao):
-    """Aplica de fato a alteração no registro de negócio correspondente, dentro da..."""
     modelo = TABELA_MODELOS.get(alteracao.tabela)
     if modelo is None:
         return False, f"Tabela '{alteracao.tabela}' desconhecida.", None, None
@@ -75,7 +69,7 @@ def _aplicar_alteracao(alteracao):
     if alteracao.operacao == TipoOperacaoAlteracao.CRIAR:
         novo_registro = modelo(**dados)
         db.session.add(novo_registro)
-        db.session.flush()  # obtém o id gerado e detecta erros de constraint cedo
+        db.session.flush()
         alteracao.registro_id = novo_registro.id
         return True, novo_registro, None, dados
 
@@ -94,12 +88,11 @@ def _aplicar_alteracao(alteracao):
             valor_novo[campo] = valor
         setattr(registro, campo, valor)
 
-    db.session.flush()  # detecta erros de constraint (ex.: CNES duplicado) cedo
+    db.session.flush()
     return True, registro, valor_anterior or None, valor_novo or None
 
 
 def aprovar_alteracao(alteracao, aprovador):
-    """Aprova uma alteração PENDENTE"""
     if alteracao.status != StatusAlteracao.PENDENTE:
         return False, "Esta alteração já foi processada e não pode ser aprovada novamente."
 
@@ -144,7 +137,6 @@ def aprovar_alteracao(alteracao, aprovador):
 
 
 def rejeitar_alteracao(alteracao, aprovador, motivo_rejeicao):
-    """Rejeita uma alteração PENDENTE"""
     if alteracao.status != StatusAlteracao.PENDENTE:
         return False, "Esta alteração já foi processada e não pode ser rejeitada novamente."
 

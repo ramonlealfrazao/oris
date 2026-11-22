@@ -1,20 +1,3 @@
-/*
- * ORIS - Design System (Fase 13A)
- * ---------------------------------------------------------------
- * Camada de estilo construída SOBRE o Bootstrap (carregado antes
- * deste arquivo) usando os tokens definidos em tokens.css - não
- * substitui o Bootstrap nem introduz um framework novo.
- *
- * Escopo desta fase: o "chrome" compartilhado por todas as telas
- * (base.html - navegação, tipografia, botões, badges, alertas,
- * formulários, foco de teclado) e a página de referência do design
- * system (/design-system). O layout interno de cada tela de negócio
- * (tabelas, formulários específicos de Unidade/Serviço/etc.) segue
- * inalterado nesta fase - a aplicação detalhada é a Fase 13B.
- */
-
-/* ---- Base ------------------------------------------------------ */
-
 body {
     background-color: var(--oris-bg);
     color: var(--oris-text);
@@ -42,8 +25,7 @@ small, .text-muted {
     color: var(--oris-text-muted) !important;
 }
 
-/* Foco de teclado visível e consistente em qualquer elemento
-   interativo — acessibilidade básica do design system. */
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -54,7 +36,6 @@ textarea:focus-visible,
     outline-offset: 2px;
 }
 
-/* ---- Navegação --------------------------------------------------- */
 
 .navbar {
     background: linear-gradient(90deg, var(--oris-navy), var(--oris-blue));
@@ -85,12 +66,6 @@ textarea:focus-visible,
     background-color: rgba(24, 183, 176, 0.18);
 }
 
-/* ---- Botões ---------------------------------------------------------
- * Uma linguagem visual única para todos os botões do sistema - as
- * classes usadas nos templates continuam sendo as do Bootstrap
- * (.btn-primary, .btn-outline-secondary etc.), só a aparência é
- * elevada aqui, uma única vez, para todo o sistema herdar.
- */
 
 .btn {
     border-radius: var(--oris-radius-sm);
@@ -120,10 +95,10 @@ textarea:focus-visible,
     opacity: 0.55;
 }
 
-/* PRIMARY - gradiente turquesa/cyan, a ação mais importante da tela */
+
 .btn-primary {
     background: linear-gradient(120deg, var(--oris-teal), var(--oris-cyan));
-    background-color: var(--oris-teal); /* fallback sólido */
+    background-color: var(--oris-teal);
     border: 1px solid transparent;
     color: var(--oris-navy);
     box-shadow: var(--oris-shadow-btn);
@@ -137,7 +112,7 @@ textarea:focus-visible,
     box-shadow: var(--oris-shadow-btn-hover);
 }
 
-/* OUTLINE PRIMARY - ação secundária com destaque, estilo "ghost" */
+
 .btn-outline-primary {
     color: var(--oris-petroleum);
     border: 1.5px solid var(--oris-petroleum);
@@ -153,7 +128,7 @@ textarea:focus-visible,
     box-shadow: var(--oris-shadow-btn);
 }
 
-/* OUTLINE SECONDARY - ação terciária/neutra (ex.: Cancelar, Voltar) */
+
 .btn-outline-secondary {
     color: var(--oris-text-muted);
     border: 1.5px solid var(--oris-border);
@@ -169,7 +144,7 @@ textarea:focus-visible,
     box-shadow: var(--oris-shadow-btn);
 }
 
-/* SUCCESS - verde sofisticado (não neon), ação positiva (ex.: Aprovar) */
+
 .btn-success {
     background: linear-gradient(120deg, var(--oris-success), #2f9e63);
     background-color: var(--oris-success);
@@ -201,7 +176,7 @@ textarea:focus-visible,
     box-shadow: var(--oris-shadow-btn);
 }
 
-/* DANGER - vermelho elegante, reservado para ações destrutivas/de rejeição */
+
 .btn-outline-danger {
     color: var(--oris-danger);
     border: 1.5px solid var(--oris-danger);
@@ -233,7 +208,7 @@ textarea:focus-visible,
     box-shadow: 0 6px 16px rgba(217, 83, 79, 0.28);
 }
 
-/* Links de ação simples (ex.: "Visualizar", breadcrumb) - sem virar botão */
+
 a.text-decoration-none:hover {
     text-decoration: underline !important;
 }
@@ -249,7 +224,6 @@ a.text-decoration-none:hover {
     }
 }
 
-/* ---- Cards, tabelas e superfícies ----------------------------------- */
 
 .card {
     border: 1px solid rgba(255, 255, 255, 0.7);
@@ -287,11 +261,6 @@ a.text-decoration-none:hover {
     transition: background-color 0.15s ease;
 }
 
-/* ---- Badges (status semânticos) --------------------------------------
- * Sempre em formato pill, com borda sutil da própria cor - mais
- * refinado que um retângulo de cor sólida, sem perder a leitura
- * imediata de "isto é um status".
- */
 
 .badge {
     font-weight: 600;
@@ -331,7 +300,6 @@ a.text-decoration-none:hover {
     border: 1px solid transparent;
 }
 
-/* ---- Alertas ------------------------------------------------------- */
 
 .alert {
     border: none;
@@ -344,10 +312,6 @@ a.text-decoration-none:hover {
 .alert-danger  { border-left-color: var(--oris-danger);  background-color: #FBEAEA; color: #8C2E2B; }
 .alert-info    { border-left-color: var(--oris-petroleum); background-color: var(--oris-surface); color: var(--oris-blue); }
 
-/* ---- Formulários -----------------------------------------------------
- * Inputs/selects deixam de usar só o padrão do Bootstrap - ganham
- * borda mais suave, leve elevação e um anel de foco mais elegante.
- */
 
 .form-control,
 .form-select {
@@ -407,7 +371,6 @@ a.text-decoration-none:hover {
     margin-bottom: 0.35rem;
 }
 
-/* ---- Rodapé ------------------------------------------------------------ */
 
 footer a {
     color: var(--oris-text-muted);
@@ -417,13 +380,6 @@ footer a:hover {
     color: var(--oris-teal);
 }
 
-/* ---- Cartão de conteúdo genérico (Fase 13B) -----------------------------
- * Usado pelo Dashboard (Fase 13B, Stage 1) e pelas telas de CRUD como
- * Unidades (Stage 2A) - um "cartão" branco simples para agrupar
- * conteúdo relacionado (uma seção de detalhe, um formulário, uma
- * tabela). Definido aqui (não em dashboard.css) porque não é
- * específico do Dashboard.
- */
 
 .oris-panel {
     background: rgba(255, 255, 255, 0.85);
@@ -435,11 +391,6 @@ footer a:hover {
     padding: 1.25rem 1.35rem;
 }
 
-/* ---- Cabeçalho de página (Fase 13B, Stage 2A) --------------------------
- * Padrão reutilizável para qualquer tela de listagem/CRUD: título +
- * descrição curta + ação principal. Substitui o antigo cabeçalho
- * "d-flex justify-content-between" repetido em cada template.
- */
 
 .oris-page-header {
     display: flex;
@@ -468,10 +419,6 @@ footer a:hover {
     flex-shrink: 0;
 }
 
-/* ---- Tira de estatísticas (versão leve dos KPI cards do Dashboard) ------
- * Para listagens que já têm os dados carregados e podem mostrar um
- * resumo agregado sem nenhuma consulta nova ao banco.
- */
 
 .oris-stat-strip {
     display: grid;
@@ -498,8 +445,7 @@ footer a:hover {
     box-shadow: var(--oris-shadow-md);
 }
 
-/* Pequeno acento circular decorativo, sugerindo um "ícone", sem
-   depender de nenhum ícone real no HTML — puramente CSS. */
+
 .oris-stat-card::before {
     content: "";
     position: absolute;
@@ -547,7 +493,6 @@ footer a:hover {
     }
 }
 
-/* ---- Estado vazio -------------------------------------------------------- */
 
 .oris-empty-state {
     text-align: center;
@@ -577,7 +522,6 @@ footer a:hover {
     margin-bottom: 0;
 }
 
-/* ---- Seções de detalhe / formulário (rótulos discretos em maiúsculas) --- */
 
 .oris-section-label {
     font-size: var(--oris-fs-xs);
@@ -607,18 +551,12 @@ footer a:hover {
     margin-bottom: 0;
 }
 
-/* Utilitário (Fase 13B, Stage 4): faz um item do grid ocupar a
-   largura toda — usado para campos de texto mais longos, como a
-   descrição de um registro de auditoria. */
+
 .oris-detail-grid-full {
     grid-column: 1 / -1;
 }
 
-/* ---- Área de upload (Fase 13B, Stage 5) -------------------------------
- * Um destaque visual simples em volta do <input type="file"> nativo —
- * não é um componente de drag-and-drop com JavaScript, só uma área
- * destacada para deixar claro onde o arquivo deve ser selecionado.
- */
+
 .oris-upload-area {
     border: 1.5px dashed var(--oris-border);
     border-radius: var(--oris-radius-md);
@@ -639,10 +577,6 @@ footer a:hover {
     margin: 0.5rem auto 0;
 }
 
-/* As regras de identidade visual do Login foram substituídas por
-   app/static/css/login-premium.css (UI/UX Final, Fase 13B) — a
-   tela de login agora tem um arquivo dedicado, no mesmo padrão de
-   Importação/Usuários. */
 
 @media (max-width: 575.98px) {
     .oris-detail-grid {
@@ -650,13 +584,11 @@ footer a:hover {
     }
 }
 
-/* ---- Tabela: hover com a cor de superfície do Design System ------------- */
 
 .table {
     --bs-table-hover-bg: var(--oris-surface);
 }
 
-/* ---- Botão "voltar" discreto --------------------------------------------- */
 
 .oris-back-link {
     display: inline-flex;
@@ -675,18 +607,17 @@ footer a:hover {
 }
 
 
-/* Botões de ação lado a lado nas tabelas */
 .table td.text-end { white-space: nowrap; }
 .table td.text-end .js-rejection-details { white-space: normal; }
 
-/* Campos obrigatórios marcados com asterisco */
+
 .form-label:has(+ [required])::after,
 .form-label:has(+ .form-control[required])::after {
     content: " *";
     color: #b02a37;
 }
 
-/* Tabelas viram cartões no celular */
+
 @media (max-width: 768px) {
     .oris-tabela-cartoes,
     .oris-tabela-cartoes tbody,

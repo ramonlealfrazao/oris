@@ -1,5 +1,3 @@
-"""Rotas de teste do RBAC (Fase 4)."""
-
 from flask import Blueprint, render_template
 
 from app.utils.decorators import roles_required, usuario_atual

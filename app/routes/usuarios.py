@@ -1,5 +1,3 @@
-"""Administração de Usuários (Fase 11)."""
-
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 
 from app.extensions import db
@@ -38,7 +36,6 @@ def _total_administradores_ativos(excluir_id=None):
 
 
 def _e_ultimo_administrador_ativo(usuario):
-    """True se `usuario` é ADMINISTRADOR, está ativo, e não existe nenhum OUTRO..."""
     if usuario.perfil != PerfilUsuario.ADMINISTRADOR or not usuario.ativo:
         return False
     return _total_administradores_ativos(excluir_id=usuario.id) == 0
@@ -95,7 +92,7 @@ def novo():
             ativo=(form.ativo.data == "1"),
         )
         db.session.add(novo_usuario)
-        db.session.flush()  # obtém o id para a auditoria
+        db.session.flush()
 
         registrar_auditoria(
             usuario=usuario_atual(),
@@ -258,7 +255,6 @@ def redefinir_senha(usuario_id):
 @usuarios_bp.route("/<int:usuario_id>/mfa/redefinir", methods=["POST"])
 @roles_required(PERFIL_ADMINISTRADOR)
 def redefinir_mfa(usuario_id):
-    """Apaga o MFA de quem perdeu o celular: no próximo login a pessoa cadastra de novo."""
     usuario = _buscar_usuario_ou_404(usuario_id)
     form = AcaoAlteracaoForm()
     if not form.validate_on_submit():
@@ -284,10 +280,6 @@ def redefinir_mfa(usuario_id):
     return redirect(url_for("usuarios.editar", usuario_id=usuario.id))
 
 
-# ------------------------------------------------------------------
-# Diretório LDAP pela interface (Requisito 3): consultar e sincronizar
-# com botões, sem terminal. Mesma regra da `flask sincronizar-ldap`.
-# ------------------------------------------------------------------
 def _config_ldap_resumo():
     cfg = current_app.config
     uri = cfg.get("LDAP_URI") or ""
@@ -344,7 +336,7 @@ def diretorio():
                 flash("Sincronização concluída: as tabelas locais foram atualizadas.", "success")
         except DiretorioConfigError as exc:
             erro = str(exc)
-        except Exception:  # rede/TLS/senha do diretório: mensagem genérica, detalhe no log
+        except Exception:
             current_app.logger.exception("Falha ao consultar o LDAP")
             erro = "Não foi possível consultar o LDAP (servidor fora do ar, certificado ou senha da conta de serviço)."
 

@@ -1,5 +1,3 @@
-"""Testes da FASE 13B - Stage 3 (UX/UI do módulo de Aprovações)."""
-
 import pytest
 
 from app import create_app
@@ -98,9 +96,9 @@ def test_indicadores_batem_com_dados_reais(client, app):
 
     _login(client, PerfilUsuario.ADMINISTRADOR)
     html = client.get("/alteracoes").get_data(as_text=True)
-    assert ">2<" in html  # total
-    assert ">2<" in html  # pendentes (ambas)
-    assert ">0<" in html  # aprovadas e rejeitadas
+    assert ">2<" in html
+    assert ">2<" in html
+    assert ">0<" in html
 
 
 def test_lista_vazia_mostra_estado_vazio(client):
@@ -120,7 +118,7 @@ def test_criacao_mostra_novo_registro_sem_antes(client, app):
     assert "Novo registro" in html
     assert "UBS Criada" in html
     assert "5551111" in html
-    assert "O que muda" not in html  # CRIAR não tem "antes"
+    assert "O que muda" not in html
 
 
 def test_edicao_mostra_o_que_muda_e_valores_propostos(client, app):
@@ -156,7 +154,6 @@ def test_alterar_situacao_mostra_comparacao(client, app):
 
 
 def test_dados_novos_nao_expoe_ids_tecnicos(client, app):
-    """unidade_id/servico_id não devem aparecer como número bruto na tela - o contexto..."""
     with app.app_context():
         unidade = Unidade.query.filter_by(cnes="9990001").first()
         unidade_id = unidade.id
@@ -169,7 +166,7 @@ def test_dados_novos_nao_expoe_ids_tecnicos(client, app):
     _login(client, PerfilUsuario.ADMINISTRADOR)
     html = client.get(f"/alteracoes/{alt_id}").get_data(as_text=True)
     assert "Unidade_id" not in html
-    assert "unidade_id" not in html.lower().replace("unidade_id do", "")  # sanity
+    assert "unidade_id" not in html.lower().replace("unidade_id do", "")
 
 
 @pytest.mark.parametrize("perfil", list(EMAILS.keys()))
@@ -196,7 +193,6 @@ def test_gestor_recebe_403_ao_tentar_aprovar_ou_rejeitar(client, app):
 
 
 def test_responsavel_nao_ve_botoes_de_decisao_mesmo_sendo_outro_solicitante(client, app):
-    """RESPONSAVEL_SAUDE_BUCAL nunca aprova, mesmo que não seja o solicitante desta..."""
     alt_id = _criar_alteracao(app, "unidades", None, "CRIAR", {"nome": "X", "cnes": "9", "tipo": "UBS", "cidade": "R", "uf": "PE", "situacao": "ATIVA"}, "Criação de nova Unidade: X (CNES 9)")
     _login(client, PerfilUsuario.RESPONSAVEL_SAUDE_BUCAL)
     html = client.get(f"/alteracoes/{alt_id}").get_data(as_text=True)
@@ -302,7 +298,6 @@ def test_rejeicao_exige_e_salva_descricao(client, app):
 
 
 def test_badge_rejeitado_usa_cor_danger(client, app):
-    """Achado corrigido nesta etapa"""
     alt_id = _criar_alteracao(
         app, "unidades", None, "CRIAR",
         {"nome": "UBS X", "cnes": "4445556", "tipo": "UBS", "endereco": None, "bairro": None, "cidade": "Recife", "uf": "PE", "situacao": "ATIVA"},

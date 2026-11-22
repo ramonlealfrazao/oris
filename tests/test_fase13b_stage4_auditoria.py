@@ -1,5 +1,3 @@
-"""Testes da FASE 13B - Stage 4 (UX/UI da tela de Auditoria)."""
-
 import pytest
 
 from app import create_app
@@ -120,7 +118,7 @@ def test_pagina_de_auditoria_nao_mostra_nenhuma_acao_de_edicao_ou_exclusao(clien
     html = client.get(f"/auditoria/{registro_id}").get_data(as_text=True)
     assert "Editar" not in html
     assert "Excluir" not in html
-    assert 'method="POST"' not in html  # nenhum formulário de mutação nesta tela
+    assert 'method="POST"' not in html
 
 
 def test_lista_mostra_aviso_de_somente_leitura(client):

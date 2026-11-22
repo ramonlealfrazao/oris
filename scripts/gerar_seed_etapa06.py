@@ -1,9 +1,3 @@
-"""Gera database/seed_etapa06.sql: historico FICTICIO de manutencoes (deterministico).
-
-Roda depois de database/seed_etapa03.sql (usa os equipamentos de id 1..N).
-Os registros historicos entram CONCLUIDOS/CANCELADOS, entao os triggers
-nao alteram a situacao dos equipamentos; as ABERTAS preventivas tambem nao.
-"""
 import os
 import random
 from datetime import date, timedelta
@@ -30,7 +24,7 @@ for _ in range(90):
         situ, concl, custo = "CANCELADA", None, 0
     else:
         situ, concl, custo = "ABERTA", None, 0
-        tipo = "PREVENTIVA"  # abertas de teste nao desligam equipamento
+        tipo = "PREVENTIVA"
         abertura = HOJE - timedelta(days=random.randint(1, 20))
     c = f"'{concl}'" if concl else "NULL"
     linhas.append(

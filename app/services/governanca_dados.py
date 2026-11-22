@@ -1,5 +1,3 @@
-"""Conteúdo da área de Governança: ISO 38500, riscos, RACI, COBIT, auditoria, ética, nuvem."""
-
 PRINCIPIOS = [
     {
         "chave": "responsabilidade",

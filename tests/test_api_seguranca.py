@@ -1,5 +1,3 @@
-"""Testes de segurança da API REST v1 (cabeçalhos e sessão)."""
-
 import pytest
 
 from app import create_app

@@ -1,4 +1,3 @@
-/* ORIS - Dashboard integrado do banco (Etapa 06). Busca /bd/dashboard/dados com os filtros. */
 (function () {
     const form = document.getElementById("filtros");
     const kpis = document.getElementById("kpis");
@@ -140,7 +139,6 @@
     }));
     document.getElementById("limpar").addEventListener("click", () => { form.reset(); carregar(); });
 
-    // restaura filtros da URL (link compartilhável)
     new URLSearchParams(location.search).forEach((v, k) => { if (form.elements[k]) form.elements[k].value = v; });
     carregar();
 })();

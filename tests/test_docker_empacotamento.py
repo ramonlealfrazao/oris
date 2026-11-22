@@ -1,5 +1,3 @@
-"""Guardas do empacotamento Docker e do cookie de sessao em producao (sem precisar do Docker)."""
-
 import importlib
 import re
 from pathlib import Path
@@ -26,7 +24,7 @@ def test_cookie_secure_e_padrao_em_producao(monkeypatch):
 
 def test_cookie_secure_so_desliga_com_false_explicito(monkeypatch):
     assert _carregar_config(monkeypatch, "false").ProductionConfig.SESSION_COOKIE_SECURE is False
-    _carregar_config(monkeypatch, None)  # restaura o padrao para os demais testes
+    _carregar_config(monkeypatch, None)
 
 
 def test_compose_nao_expoe_o_banco_e_usa_mysql_8():
@@ -89,8 +87,8 @@ def test_proxyfix_so_confia_no_cabecalho_com_proxy_confiavel_configurado():
     cab = {"X-Forwarded-For": "198.51.100.77"}
     sem = _app_com_proxies(0).test_client().get("/_ip", headers=cab, environ_overrides={"REMOTE_ADDR": "10.0.0.5"})
     com = _app_com_proxies(1).test_client().get("/_ip", headers=cab, environ_overrides={"REMOTE_ADDR": "10.0.0.5"})
-    assert sem.get_data(as_text=True) == "10.0.0.5"      # cabecalho forjavel e ignorado
-    assert com.get_data(as_text=True) == "198.51.100.77"  # proxy confiavel: IP real do usuario
+    assert sem.get_data(as_text=True) == "10.0.0.5"
+    assert com.get_data(as_text=True) == "198.51.100.77"
 
 
 def test_idp_compose_sem_segredo_padrao_e_sem_portas_publicas():
@@ -115,7 +113,7 @@ def test_realm_gerado_troca_marcadores_e_nao_vaza_segredo_no_modelo(tmp_path, mo
     import sys
 
     modelo = (RAIZ / "docker" / "keycloak" / "oris-realm.template.json").read_text(encoding="utf-8")
-    json.loads(modelo)  # modelo e JSON valido
+    json.loads(modelo)
     assert "@@OIDC_CLIENT_SECRET@@" in modelo and "@@ORIS_DEMO_SENHA@@" in modelo
     env = {"ORIS_DOMAIN": "teste.exemplo.com", "OIDC_CLIENT_SECRET": "segredo-x", "ORIS_DEMO_SENHA": "senha-y",
            "LDAP_ADMIN_PASSWORD": "senha-ldap-z",
@@ -146,10 +144,9 @@ def test_laboratorio_visual_protege_consoles_e_nao_tem_segredo_padrao():
     compose = (RAIZ / "docker-compose.lab.yml").read_text(encoding="utf-8")
     for var in ("DB_PASSWORD", "DB_ROOT_PASSWORD", "SECRET_KEY", "DATA_ENCRYPTION_KEY", "SENHA_ADMIN", "MEU_IP", "ORIS_DOMAIN"):
         assert f"${{{var}:?" in compose, f"{var} deve ser obrigatoria (sem valor padrao)"
-    # So o Caddy publica portas: LDAP, Keycloak, phpLDAPadmin, app e banco ficam na rede interna.
     import re
 
-    servicos = compose.split("\nservices:\n", 1)[1].split("\nvolumes:\n", 1)[0]
+    servicos = ("\n" + compose).split("\nservices:\n", 1)[1].split("\nvolumes:\n", 1)[0]
     blocos = re.split(r"\n(?=  [a-z]+:\n)", "\n" + servicos)
     publicam = [b.strip().split(":")[0] for b in blocos if "\n    ports:" in b]
     assert publicam == ["caddy"], publicam
@@ -162,6 +159,6 @@ def test_laboratorio_visual_protege_consoles_e_nao_tem_segredo_padrao():
 
 def test_user_data_do_laboratorio_exige_preencher_e_nao_traz_segredo():
     script = (RAIZ / "docker" / "lab" / "user-data.sh").read_text(encoding="utf-8")
-    assert 'SENHA_ADMIN="TROQUE_POR_UMA_SENHA_FORTE"' in script  # placeholder, nunca uma senha real
-    assert "*COLE_*|*TROQUE_*" in script  # recusa rodar sem preencher
+    assert 'SENHA_ADMIN="TROQUE_POR_UMA_SENHA_FORTE"' in script
+    assert "*COLE_*|*TROQUE_*" in script
     assert "chmod 600 .env.lab" in script and "openssl rand" in script

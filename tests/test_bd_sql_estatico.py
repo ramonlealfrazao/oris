@@ -1,10 +1,3 @@
-"""Guarda anti SQL Injection do módulo BD (SQL explícito, Etapa 03).
-
-Análise estática (AST) de `app/bd/`: todo SQL enviado ao banco precisa ser uma
-constante literal, e os valores vêm sempre por parâmetros (`%s` / `%(nome)s`).
-Se alguém passar a montar SQL com f-string, `+`, `%` ou `.format()`, este teste falha.
-"""
-
 import ast
 import pathlib
 
@@ -25,8 +18,6 @@ def _nome_da_chamada(no):
 
 
 def _primeiro_argumento_seguro(arg):
-    """Aceita apenas: constante SQL_*, o parâmetro `sql` das funções de conexão
-    ou o `sql` do catálogo de consultas (consulta["sql"])."""
     if isinstance(arg, ast.Name):
         return arg.id.startswith("SQL_") or arg.id == "sql"
     if isinstance(arg, ast.Subscript):

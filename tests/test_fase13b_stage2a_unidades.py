@@ -1,5 +1,3 @@
-"""Testes da FASE 13B - Stage 2A (UX/UI das Unidades de Saúde)."""
-
 import pytest
 
 from app import create_app
@@ -103,9 +101,9 @@ def test_unidade_inexistente_retorna_404(client):
 def test_indicadores_da_lista_batem_com_dados_reais(client):
     _login(client, PerfilUsuario.ADMINISTRADOR)
     html = client.get("/unidades").get_data(as_text=True)
-    assert ">4<" in html  # total
-    assert ">2<" in html  # ativas
-    assert ">1<" in html  # inativas e manutenção (ambas 1)
+    assert ">4<" in html
+    assert ">2<" in html
+    assert ">1<" in html
 
 
 def test_lista_vazia_mostra_estado_vazio(client, app):
@@ -197,7 +195,7 @@ def test_edicao_continua_gerando_alteracao_pendente(client, app):
 
     with app.app_context():
         unidade = db.session.get(Unidade, unidade_id)
-        assert unidade.nome == "UBS Alfa"  # nome original, ainda não aplicado
+        assert unidade.nome == "UBS Alfa"
         alteracao = Alteracao.query.filter_by(tabela="unidades", operacao="EDITAR", registro_id=unidade_id).first()
         assert alteracao is not None
         assert alteracao.status.value == "PENDENTE"
