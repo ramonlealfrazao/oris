@@ -633,3 +633,18 @@ footer a:hover {
     }
     .oris-tabela-cartoes td.text-end { text-align: left !important; margin-top: 0.5rem; }
 }
+
+.oris-tabela-auditoria td,
+.oris-tabela-auditoria th {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+}
+
+.oris-auditoria-descricao {
+    min-width: 220px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
