@@ -74,7 +74,9 @@ def test_erro_de_login_aparece_dentro_do_cartao(client):
     assert html.count("Email ou senha inválidos.") == 1
 
 
-def test_menu_usa_nomes_claros(client):
+def test_menu_usa_nomes_claros(app, client):
+    Usuario.query.filter_by(email=EMAIL).one().perfil = PerfilUsuario.GESTAO_INFORMACAO
+    db.session.commit()
     html = _login(client).get_data(as_text=True)
     assert "Indicadores de manutenção" in html
     assert "Rotinas do banco" in html

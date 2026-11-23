@@ -67,6 +67,7 @@
                     <i class="bi bi-clock-history"></i> <span>Auditoria</span>
                 </a>
                 {% endif %}
+                {% if usuario_logado and usuario_logado.perfil.value in ["ADMINISTRADOR", "GESTAO_INFORMACAO", "GESTOR"] %}
                 <a class="oris-nav-item {% if request.blueprint == 'bd' and request.endpoint not in ('bd.estatistica_painel', 'bd.dashboard_integrado', 'bd.rotinas', 'bd.rotinas_executar') %}active{% endif %}"
                    href="{{ url_for('bd.index') }}">
                     <i class="bi bi-database"></i> <span>Banco de Dados</span>
@@ -83,18 +84,23 @@
                    href="{{ url_for('bd.estatistica_painel') }}">
                     <i class="bi bi-bar-chart-line"></i> <span>Estatística</span>
                 </a>
+                {% endif %}
                 <a class="oris-nav-item {% if request.blueprint == 'relatorios' %}active{% endif %}"
                    href="{{ url_for('relatorios.index') }}">
                     <i class="bi bi-file-earmark-bar-graph"></i> <span>Relatórios</span>
                 </a>
+                {% if usuario_logado and usuario_logado.perfil.value in ["ADMINISTRADOR", "GESTAO_INFORMACAO", "RESPONSAVEL_SAUDE_BUCAL"] %}
                 <a class="oris-nav-item {% if request.blueprint == 'importacao' %}active{% endif %}"
                    href="{{ url_for('importacao.index') }}">
                     <i class="bi bi-file-earmark-arrow-up"></i> <span>Importar</span>
                 </a>
+                {% endif %}
+                {% if usuario_logado and usuario_logado.perfil.value in ["ADMINISTRADOR", "GESTAO_INFORMACAO", "GESTOR"] %}
                 <a class="oris-nav-item {% if request.blueprint == 'governanca' %}active{% endif %}"
                    href="{{ url_for('governanca.index') }}">
                     <i class="bi bi-diagram-3"></i> <span>Governança</span>
                 </a>
+                {% endif %}
                 <a class="oris-nav-item {% if request.endpoint in ('lgpd.meus_dados',) %}active{% endif %}"
                    href="{{ url_for('lgpd.meus_dados') }}">
                     <i class="bi bi-person-lock"></i> <span>Meus dados</span>

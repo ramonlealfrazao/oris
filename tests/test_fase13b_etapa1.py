@@ -103,7 +103,7 @@ def test_todos_os_perfis_veem_itens_comuns_do_menu(client):
         c = client.application.test_client()
         c.post("/login", data={"email": EMAILS[perfil], "senha": SENHA})
         html = c.get("/dashboard").get_data(as_text=True)
-        for item in ("Dashboard</span>", "Unidades de Saúde</span>", "Serviços</span>", "Equipamentos</span>", "Importar</span>"):
+        for item in ("Dashboard</span>", "Unidades de Saúde</span>", "Serviços</span>", "Equipamentos</span>"):
             assert item in html, f"{item} ausente para {perfil.value}"
 
 

@@ -11,9 +11,15 @@ from app.bd import dao_equipamentos, dao_manutencoes, dao_servicos, dao_unidades
 from app.bd.conexao import ErroBanco
 from app.bd.forms import EquipamentoBDForm, ExcluirForm, ManutencaoBDForm, ServicoBDForm, UnidadeBDForm
 from app.models import PerfilUsuario
-from app.utils.decorators import login_required, roles_required, usuario_atual
+from app.utils.decorators import roles_required, usuario_atual
 
 bd_bp = Blueprint("bd", __name__, url_prefix="/bd")
+
+PERFIS_BD = (
+    PerfilUsuario.ADMINISTRADOR.value,
+    PerfilUsuario.GESTAO_INFORMACAO.value,
+    PerfilUsuario.GESTOR.value,
+)
 
 PERFIS_ESCRITA_BD = (PerfilUsuario.ADMINISTRADOR.value, PerfilUsuario.GESTAO_INFORMACAO.value)
 
@@ -100,7 +106,7 @@ def _sql_da_tela(cfg, *nomes):
 
 
 @bd_bp.route("")
-@login_required
+@roles_required(*PERFIS_BD)
 def index():
     totais = {}
     erro = None
@@ -117,13 +123,13 @@ def index():
 
 
 @bd_bp.route("/consultas")
-@login_required
+@roles_required(*PERFIS_BD)
 def consultas():
     return render_template("bd/consultas.html", consultas=cat_consultas.CONSULTAS)
 
 
 @bd_bp.route("/consultas/<consulta_id>")
-@login_required
+@roles_required(*PERFIS_BD)
 def executar_consulta(consulta_id):
     consulta = cat_consultas.CONSULTAS_POR_ID.get(consulta_id)
     if consulta is None:
@@ -142,7 +148,7 @@ def executar_consulta(consulta_id):
 
 
 @bd_bp.route("/dashboard")
-@login_required
+@roles_required(*PERFIS_BD)
 def dashboard_integrado():
     erro, opcoes = None, {"tipos_unidade": []}
     try:
@@ -154,7 +160,7 @@ def dashboard_integrado():
 
 
 @bd_bp.route("/dashboard/dados")
-@login_required
+@roles_required(*PERFIS_BD)
 def dashboard_dados():
     filtros = dash_bd.ler_filtros(request.args)
     try:
@@ -218,13 +224,13 @@ def _contexto_rotinas():
 
 
 @bd_bp.route("/rotinas")
-@login_required
+@roles_required(*PERFIS_BD)
 def rotinas():
     return render_template("bd/rotinas.html", resultado=None, **_contexto_rotinas())
 
 
 @bd_bp.route("/rotinas/executar", methods=["POST"])
-@login_required
+@roles_required(*PERFIS_BD)
 def rotinas_executar():
     if not ExcluirForm().validate_on_submit():
         abort(400)
@@ -267,7 +273,7 @@ def _imagens_estatistica():
 
 
 @bd_bp.route("/estatistica")
-@login_required
+@roles_required(*PERFIS_BD)
 def estatistica_painel():
     dados, medidas, erro = {}, {}, None
     try:
@@ -283,7 +289,7 @@ def estatistica_painel():
 
 
 @bd_bp.route("/<entidade>")
-@login_required
+@roles_required(*PERFIS_BD)
 def listar(entidade):
     cfg = _entidade_ou_404(entidade)
     situacao = request.args.get("situacao") or None

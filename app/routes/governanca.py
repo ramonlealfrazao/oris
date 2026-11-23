@@ -1,8 +1,15 @@
 from flask import Blueprint, abort, render_template
 
+from app.models import PerfilUsuario
 from app.services import governanca_dados as dados
 from app.services import governanca_service as servico
-from app.utils.decorators import login_required
+from app.utils.decorators import roles_required
+
+PERFIS_GOVERNANCA = (
+    PerfilUsuario.ADMINISTRADOR.value,
+    PerfilUsuario.GESTAO_INFORMACAO.value,
+    PerfilUsuario.GESTOR.value,
+)
 
 governanca_bp = Blueprint("governanca", __name__, url_prefix="/governanca")
 
@@ -42,7 +49,7 @@ def _contexto(chave):
 
 
 @governanca_bp.route("")
-@login_required
+@roles_required(*PERFIS_GOVERNANCA)
 def index():
     return render_template(
         "governanca/index.html",
@@ -53,7 +60,7 @@ def index():
 
 
 @governanca_bp.route("/<chave>")
-@login_required
+@roles_required(*PERFIS_GOVERNANCA)
 def secao(chave):
     if chave not in SECOES:
         abort(404)

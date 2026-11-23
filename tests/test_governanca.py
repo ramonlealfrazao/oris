@@ -66,11 +66,28 @@ def test_governanca_exige_login(client, rota):
     assert "/login" in resp.headers["Location"]
 
 
-@pytest.mark.parametrize("perfil", list(PerfilUsuario))
+PERFIS_GOVERNANCA_E_BD = [PerfilUsuario.ADMINISTRADOR, PerfilUsuario.GESTAO_INFORMACAO, PerfilUsuario.GESTOR]
+
+
+@pytest.mark.parametrize("perfil", PERFIS_GOVERNANCA_E_BD)
 @pytest.mark.parametrize("rota", ["/governanca"] + [f"/governanca/{s}" for s in SECOES])
-def test_todo_perfil_abre_todas_as_paginas(client, perfil, rota):
+def test_perfis_autorizados_abrem_todas_as_paginas(client, perfil, rota):
     entrar(client, perfil)
     assert client.get(rota).status_code == 200
+
+
+@pytest.mark.parametrize("rota", ["/governanca", "/governanca/riscos", "/bd", "/bd/dashboard", "/bd/rotinas", "/bd/estatistica", "/bd/unidades"])
+def test_responsavel_saude_bucal_nao_acessa_governanca_nem_banco_de_dados(client, rota):
+    entrar(client, PerfilUsuario.RESPONSAVEL_SAUDE_BUCAL)
+    assert client.get(rota).status_code == 403
+
+
+@pytest.mark.parametrize("perfil,ve", [(p, p in PERFIS_GOVERNANCA_E_BD) for p in PerfilUsuario])
+def test_menu_so_mostra_governanca_e_banco_de_dados_para_quem_acessa(client, perfil, ve):
+    entrar(client, perfil)
+    html = client.get("/dashboard").get_data(as_text=True)
+    assert ('href="/governanca"' in html) == ve
+    assert ('href="/bd"' in html) == ve
 
 
 def test_secao_inexistente_da_404(client):
@@ -173,3 +190,15 @@ def test_menu_tem_governanca_e_meus_dados(client):
     client.get("/logout")
     entrar(client, PerfilUsuario.ADMINISTRADOR)
     assert 'href="/lgpd/solicitacoes"' in client.get("/governanca").get_data(as_text=True)
+
+
+@pytest.mark.parametrize("perfil,ve_importar", [
+    (PerfilUsuario.ADMINISTRADOR, True),
+    (PerfilUsuario.GESTAO_INFORMACAO, True),
+    (PerfilUsuario.RESPONSAVEL_SAUDE_BUCAL, True),
+    (PerfilUsuario.GESTOR, False),
+])
+def test_menu_so_mostra_importar_para_quem_pode_importar(client, perfil, ve_importar):
+    entrar(client, perfil)
+    html = client.get("/dashboard").get_data(as_text=True)
+    assert ("href=\"/importacao" in html) == ve_importar
