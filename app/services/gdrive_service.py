@@ -52,7 +52,7 @@ def _config_para_validar_token(config):
     return {"OIDC_CLIENT_ID": config["GOOGLE_CLIENT_ID"], "OIDC_ALLOW_INSECURE": False}
 
 
-def iniciar_autorizacao_oidc(redirect_uri, config=None):
+def iniciar_autorizacao_oidc(redirect_uri, config=None, email_sugerido=""):
     config = _cfg(config)
     estado = {
         "state": secrets.token_urlsafe(24),
@@ -74,7 +74,13 @@ def iniciar_autorizacao_oidc(redirect_uri, config=None):
         "code_challenge": desafio,
         "code_challenge_method": "S256",
         "prompt": "consent",
+        "hl": "pt-BR",
     }
+    dominio = config.get("GOOGLE_DOMINIO", "").strip().lower()
+    if dominio:
+        parametros["hd"] = dominio
+        if email_sugerido.lower().endswith(f"@{dominio}"):
+            parametros["login_hint"] = email_sugerido
     url = f"{metadados['authorization_endpoint']}?{urllib.parse.urlencode(parametros)}"
     return url, estado
 

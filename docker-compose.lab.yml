@@ -64,6 +64,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_SA_ARQUIVO: ${GOOGLE_SA_ARQUIVO:-}
       GOOGLE_DRIVE_PASTA_ID: ${GOOGLE_DRIVE_PASTA_ID:-}
+      GOOGLE_DOMINIO: ${GOOGLE_DOMINIO:-cesar.school}
 
   ldap:
     image: osixia/openldap:1.5.0

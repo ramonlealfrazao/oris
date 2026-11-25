@@ -77,30 +77,57 @@ def gerar_csv(entidade):
 
 
 _PADRAO_EXPORTACAO = re.compile(r"\(objeto (?P<chave>[^)]+)\), SHA-256 (?P<sha>[0-9a-f]{64})")
-CABECALHO_HISTORICO = ["data_hora_utc", "relatorio", "exportado_por", "origem_ip", "arquivo", "objeto_s3", "sha256"]
+_PADRAO_EXPORTACAO_DRIVE = re.compile(
+    r"via (?P<metodo>OIDC|OAuth2 M2M) \(arquivo (?P<arquivo>[^,]+), destino [^)]+\), SHA-256 (?P<sha>[0-9a-f]{64})"
+)
+_DESTINOS_DRIVE = {"OIDC": "Google Drive (OIDC)", "OAuth2 M2M": "Google Drive (M2M)"}
+CABECALHO_HISTORICO = [
+    "data_hora_utc", "relatorio", "exportado_por", "origem_ip", "arquivo", "objeto_s3", "sha256", "destino",
+]
+
+
+def _dados_da_exportacao(registro):
+    descricao = registro.descricao or ""
+    if registro.acao == "EXPORTAR_DRIVE":
+        achado = _PADRAO_EXPORTACAO_DRIVE.search(descricao)
+        if not achado:
+            return {"destino": "Google Drive", "arquivo": "", "chave": "", "sha256": ""}
+        return {
+            "destino": _DESTINOS_DRIVE[achado["metodo"]],
+            "arquivo": achado["arquivo"],
+            "chave": "",
+            "sha256": achado["sha"],
+        }
+    achado = _PADRAO_EXPORTACAO.search(descricao)
+    chave = achado["chave"] if achado else ""
+    return {
+        "destino": "Amazon S3",
+        "arquivo": chave.rsplit("/", 1)[-1],
+        "chave": chave,
+        "sha256": achado["sha"] if achado else "",
+    }
 
 
 def historico_exportacoes(limite=500):
     registros = (
-        Auditoria.query.filter_by(acao="EXPORTAR_RELATORIO", resultado="SUCESSO")
+        Auditoria.query.filter(
+            Auditoria.acao.in_(("EXPORTAR_RELATORIO", "EXPORTAR_DRIVE")),
+            Auditoria.resultado == "SUCESSO",
+        )
         .order_by(Auditoria.data_hora.desc(), Auditoria.id.desc())
         .limit(limite)
         .all()
     )
-    linhas = []
-    for r in registros:
-        achado = _PADRAO_EXPORTACAO.search(r.descricao or "")
-        chave = achado["chave"] if achado else ""
-        linhas.append({
+    return [
+        {
             "data_hora": r.data_hora,
             "relatorio": r.tabela or "",
             "usuario": r.usuario.nome if r.usuario else "",
             "ip": r.origem_ip or "",
-            "arquivo": chave.rsplit("/", 1)[-1],
-            "chave": chave,
-            "sha256": achado["sha"] if achado else "",
-        })
-    return linhas
+            **_dados_da_exportacao(r),
+        }
+        for r in registros
+    ]
 
 
 def gerar_csv_historico():
@@ -110,7 +137,7 @@ def gerar_csv_historico():
     for h in historico_exportacoes(limite=100000):
         escritor.writerow([sanitizar_celula(c) for c in (
             h["data_hora"].strftime("%Y-%m-%d %H:%M:%S"), h["relatorio"], h["usuario"],
-            h["ip"], h["arquivo"], h["chave"], h["sha256"],
+            h["ip"], h["arquivo"], h["chave"], h["sha256"], h["destino"],
         )])
     carimbo = utcnow().strftime("%Y%m%d-%H%M%S")
     return f"oris-historico-exportacoes-{carimbo}.csv", ("﻿" + buffer.getvalue()).encode("utf-8")

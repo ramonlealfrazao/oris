@@ -80,6 +80,7 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
     GOOGLE_SA_ARQUIVO = os.getenv("GOOGLE_SA_ARQUIVO", "")
     GOOGLE_DRIVE_PASTA_ID = os.getenv("GOOGLE_DRIVE_PASTA_ID", "")
+    GOOGLE_DOMINIO = os.getenv("GOOGLE_DOMINIO", "")
 
     S3_BUCKET = os.getenv("S3_BUCKET", "")
     S3_REGION = os.getenv("S3_REGION", "")

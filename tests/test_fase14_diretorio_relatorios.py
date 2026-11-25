@@ -723,7 +723,7 @@ def test_historico_de_exportacoes_aparece_na_tela_e_na_planilha(app, client, s3)
     client.post("/relatorios/servicos/exportar-s3")
 
     html = client.get("/relatorios").get_data(as_text=True)
-    assert "Histórico de exportações para o S3" in html and "Baixar planilha (CSV)" in html
+    assert "Histórico de exportações para a nuvem" in html and "Baixar planilha (CSV)" in html
     assert "Unidades de Saúde" in html and "Serviços" in html
 
     resp = client.get("/relatorios/historico.csv")

@@ -170,3 +170,60 @@ def test_callback_valido_envia_com_token_da_pessoa_e_audita(app, client, envios,
         registro = Auditoria.query.filter_by(acao="EXPORTAR_DRIVE", tabela="unidades").one()
         assert "OIDC" in registro.descricao and "ana@exemplo.com" in registro.descricao
 
+
+
+def _consulta_da_autorizacao(client):
+    resp = client.post("/relatorios/unidades/exportar-drive-oidc")
+    return urllib.parse.parse_qs(urllib.parse.urlparse(resp.headers["Location"]).query)
+
+
+def test_oidc_pede_telas_em_portugues_e_sugere_o_dominio(app, client, monkeypatch):
+    _configurar_oidc(app, monkeypatch)
+    app.config["GOOGLE_DOMINIO"] = "rede.gov"
+    _login(client, PerfilUsuario.GESTAO_INFORMACAO)
+    consulta = _consulta_da_autorizacao(client)
+    assert consulta["hl"] == ["pt-BR"] and consulta["hd"] == ["rede.gov"]
+
+
+@pytest.mark.parametrize("email, esperado", [
+    ("ana@rede.gov", ["ana@rede.gov"]),
+    ("ana@outrarede.gov", None),
+])
+def test_oidc_so_sugere_email_do_proprio_dominio(app, monkeypatch, email, esperado):
+    _configurar_oidc(app, monkeypatch)
+    app.config["GOOGLE_DOMINIO"] = "rede.gov"
+    with app.app_context():
+        url, _ = gdrive_service.iniciar_autorizacao_oidc("https://oris.test/cb", email_sugerido=email)
+    assert urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get("login_hint") == esperado
+
+
+def test_oidc_sem_dominio_nao_envia_hd_nem_email(app, client, monkeypatch):
+    _configurar_oidc(app, monkeypatch)
+    app.config["GOOGLE_DOMINIO"] = ""
+    _login(client, PerfilUsuario.GESTAO_INFORMACAO)
+    consulta = _consulta_da_autorizacao(client)
+    assert "hd" not in consulta and "login_hint" not in consulta
+
+
+def test_historico_mostra_envios_ao_drive_com_o_metodo(app, client, conta_servico, envios, monkeypatch):
+    caminho, _ = conta_servico
+    app.config.update(GOOGLE_SA_ARQUIVO=caminho, GOOGLE_DRIVE_PASTA_ID="pasta123")
+    monkeypatch.setattr(gdrive_service, "token_m2m", lambda config=None: "tok-m2m")
+    _configurar_oidc(app, monkeypatch)
+    monkeypatch.setattr(
+        gdrive_service, "concluir_autorizacao_oidc",
+        lambda codigo, estado, redirect_uri, config=None: ("tok-pessoa", "ana@exemplo.com"),
+    )
+    _dados_rede(app)
+    _login(client, PerfilUsuario.GESTAO_INFORMACAO)
+    client.post("/relatorios/unidades/exportar-drive-m2m")
+    estado = _consulta_da_autorizacao(client)["state"][0]
+    client.get(f"/relatorios/google/callback?code=abc&state={estado}")
+
+    html = client.get("/relatorios").get_data(as_text=True)
+    assert "<td>Google Drive (M2M)</td>" in html and "<td>Google Drive (OIDC)</td>" in html
+    assert envios[0]["nome"] in html
+
+    linhas = client.get("/relatorios/historico.csv").get_data(as_text=True).lstrip("\ufeff").splitlines()
+    assert linhas[0].endswith(",sha256,destino") and len(linhas) == 3
+    assert {linha.rsplit(",", 1)[1] for linha in linhas[1:]} == {"Google Drive (M2M)", "Google Drive (OIDC)"}

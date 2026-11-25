@@ -167,7 +167,10 @@ def exportar_drive_oidc(entidade):
         flash("A exportação ao Google Drive (OIDC) não está configurada neste ambiente.", "warning")
         return redirect(url_for("relatorios.index"))
     try:
-        url, estado = gdrive_service.iniciar_autorizacao_oidc(url_for("relatorios.callback_drive", _external=True))
+        url, estado = gdrive_service.iniciar_autorizacao_oidc(
+            url_for("relatorios.callback_drive", _external=True),
+            email_sugerido=usuario_atual().email,
+        )
     except gdrive_service.DriveError as erro:
         flash(str(erro), "danger")
         return redirect(url_for("relatorios.index"))
