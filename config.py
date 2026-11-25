@@ -76,6 +76,11 @@ class Config:
     OIDC_PROMPT = os.getenv("OIDC_PROMPT", "login")
     OIDC_ALLOW_INSECURE = os.getenv("OIDC_ALLOW_INSECURE", "false").lower() == "true"
 
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_SA_ARQUIVO = os.getenv("GOOGLE_SA_ARQUIVO", "")
+    GOOGLE_DRIVE_PASTA_ID = os.getenv("GOOGLE_DRIVE_PASTA_ID", "")
+
     S3_BUCKET = os.getenv("S3_BUCKET", "")
     S3_REGION = os.getenv("S3_REGION", "")
     S3_PREFIX = os.getenv("S3_PREFIX", "oris/relatorios")

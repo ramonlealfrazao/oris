@@ -64,6 +64,22 @@
                         </button>
                     </form>
                     {% endif %}
+                    {% if pode_exportar and drive_oidc_ativo %}
+                    <form method="POST" action="{{ url_for('relatorios.exportar_drive_oidc', entidade=entidade) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-google" aria-hidden="true"></i> Drive (OIDC)
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if pode_exportar and drive_m2m_ativo %}
+                    <form method="POST" action="{{ url_for('relatorios.exportar_drive_m2m', entidade=entidade) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-robot" aria-hidden="true"></i> Drive (M2M)
+                        </button>
+                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

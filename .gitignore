@@ -32,3 +32,5 @@ Thumbs.db
 htmlcov/
 docker/ldap/certs/
 docker/keycloak/generated/
+
+segredos/

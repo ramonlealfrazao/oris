@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, session, url_for
+from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
 
 from app.extensions import db
 from app.models import PerfilUsuario
@@ -8,6 +8,7 @@ from app.services.armazenamento_service import (
     gerar_url_download,
     s3_configurado,
 )
+from app.services import gdrive_service
 from app.services.auditoria_service import registrar_auditoria
 from app.services.relatorio_service import (
     ENTIDADES_RELATORIO,
@@ -64,6 +65,8 @@ def index():
         titulos=TITULOS,
         pode_exportar=usuario.perfil.value in PERFIS_QUE_EXPORTAM,
         s3_ativo=s3_configurado(),
+        drive_oidc_ativo=gdrive_service.oidc_drive_configurado(),
+        drive_m2m_ativo=gdrive_service.m2m_drive_configurado(),
     )
 
 
@@ -140,4 +143,80 @@ def exportar_s3(entidade):
     db.session.commit()
 
     session["ultima_exportacao"] = {"entidade": entidade, "chave": chave, "sha256": hash_conteudo}
+    return redirect(url_for("relatorios.index"))
+
+
+def _auditar_drive(entidade, metodo, arquivo, hash_conteudo, destino):
+    registrar_auditoria(
+        usuario=usuario_atual(),
+        acao="EXPORTAR_DRIVE",
+        tabela=entidade,
+        descricao=(
+            f"Relatório de {entidade} enviado ao Google Drive via {metodo} "
+            f"(arquivo {arquivo}, destino {destino}), SHA-256 {hash_conteudo}."
+        ),
+    )
+    db.session.commit()
+
+
+@relatorios_bp.route("/<entidade>/exportar-drive-oidc", methods=["POST"])
+@roles_required(*PERFIS_QUE_EXPORTAM)
+def exportar_drive_oidc(entidade):
+    _validar_entidade_ou_404(entidade)
+    if not gdrive_service.oidc_drive_configurado():
+        flash("A exportação ao Google Drive (OIDC) não está configurada neste ambiente.", "warning")
+        return redirect(url_for("relatorios.index"))
+    try:
+        url, estado = gdrive_service.iniciar_autorizacao_oidc(url_for("relatorios.callback_drive", _external=True))
+    except gdrive_service.DriveError as erro:
+        flash(str(erro), "danger")
+        return redirect(url_for("relatorios.index"))
+    session["drive_oidc"] = {**estado, "entidade": entidade}
+    return redirect(url)
+
+
+@relatorios_bp.route("/google/callback")
+@roles_required(*PERFIS_QUE_EXPORTAM)
+def callback_drive():
+    estado = session.pop("drive_oidc", None)
+    codigo = request.args.get("code")
+    if not estado or not codigo or request.args.get("state") != estado.get("state"):
+        flash("Autorização do Google Drive inválida ou cancelada.", "danger")
+        return redirect(url_for("relatorios.index"))
+    entidade = estado["entidade"]
+    _validar_entidade_ou_404(entidade)
+    try:
+        token, email = gdrive_service.concluir_autorizacao_oidc(
+            codigo, estado, url_for("relatorios.callback_drive", _external=True)
+        )
+        nome, conteudo = gerar_csv(entidade)
+        enviado = gdrive_service.enviar_arquivo(token, conteudo, gdrive_service.nome_arquivo(entidade))
+    except gdrive_service.DriveError as erro:
+        flash(str(erro), "danger")
+        return redirect(url_for("relatorios.index"))
+    hash_conteudo = sha256_hex(conteudo)
+    _auditar_drive(entidade, "OIDC", enviado.get("name", nome), hash_conteudo, f"conta Google {email}")
+    flash(f"Relatório enviado ao Google Drive de {email} (OIDC): {enviado.get('name', nome)}.", "success")
+    return redirect(url_for("relatorios.index"))
+
+
+@relatorios_bp.route("/<entidade>/exportar-drive-m2m", methods=["POST"])
+@roles_required(*PERFIS_QUE_EXPORTAM)
+def exportar_drive_m2m(entidade):
+    _validar_entidade_ou_404(entidade)
+    if not gdrive_service.m2m_drive_configurado():
+        flash("A exportação ao Google Drive (M2M) não está configurada neste ambiente.", "warning")
+        return redirect(url_for("relatorios.index"))
+    nome, conteudo = gerar_csv(entidade)
+    try:
+        token = gdrive_service.token_m2m()
+        enviado = gdrive_service.enviar_arquivo(
+            token, conteudo, gdrive_service.nome_arquivo(entidade),
+            current_app.config["GOOGLE_DRIVE_PASTA_ID"],
+        )
+    except gdrive_service.DriveError as erro:
+        flash(str(erro), "danger")
+        return redirect(url_for("relatorios.index"))
+    _auditar_drive(entidade, "OAuth2 M2M", enviado.get("name", nome), sha256_hex(conteudo), "pasta compartilhada")
+    flash(f"Relatório enviado à pasta compartilhada do Google Drive (M2M): {enviado.get('name', nome)}.", "success")
     return redirect(url_for("relatorios.index"))
